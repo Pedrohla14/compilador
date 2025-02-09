@@ -73,12 +73,44 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef struct Symbol {
+    char *name;
+    char *type;
+    struct Symbol *next;
+} Symbol;
+
+Symbol *symbol_table = NULL;
+
+void declare_variable(const char *name, const char *type) {
+    Symbol *s = (Symbol *) malloc(sizeof(Symbol));
+    s->name = strdup(name);
+    s->type = strdup(type);
+    s->next = symbol_table;
+    symbol_table = s;
+}
+
+int variable_declared(const char *name) {
+    Symbol *current = symbol_table;
+    while (current != NULL) {
+        if (strcmp(current->name, name) == 0) {
+            return 1;
+        }
+        current = current->next;
+    }
+    return 0;
+}
+
+void check_variable(const char *name) {
+    if (!variable_declared(name)) {
+        fprintf(stderr, "Erro semantico: variavel '%s' nao foi declarada\n", name);
+    }
+}
+
 extern FILE *yyin;
 void yyerror(const char *s);
 int yylex();
 
-
-#line 82 "linguagem.tab.c"
+#line 114 "linguagem.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -559,9 +591,9 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    36,    36,    44,    45,    56,    66,    67,    68,    72,
-      74,    84,    89,    90,   101,   106,   107,   118,   124,   130,
-     136,   142,   148,   153,   158
+       0,    68,    68,    76,    77,    88,   105,   106,   107,   111,
+     113,   123,   128,   129,   140,   145,   146,   157,   164,   171,
+     178,   185,   192,   197,   204
 };
 #endif
 
@@ -1157,22 +1189,22 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* programa: declaracoes config repita  */
-#line 37 "linguagem.y"
+#line 69 "linguagem.y"
     { 
         printf("#include <Arduino.h>\n\n%s\n\nvoid setup() {\n%s}\n\nvoid loop() {\n%s}\n", (yyvsp[-2].str), (yyvsp[-1].str), (yyvsp[0].str));
         free((yyvsp[-2].str)); free((yyvsp[-1].str)); free((yyvsp[0].str));
     }
-#line 1166 "linguagem.tab.c"
+#line 1198 "linguagem.tab.c"
     break;
 
   case 3: /* declaracoes: %empty  */
-#line 44 "linguagem.y"
+#line 76 "linguagem.y"
     { (yyval.str) = strdup(""); }
-#line 1172 "linguagem.tab.c"
+#line 1204 "linguagem.tab.c"
     break;
 
   case 4: /* declaracoes: declaracoes declaracao  */
-#line 46 "linguagem.y"
+#line 78 "linguagem.y"
     { 
         char* temp = (char*) malloc(strlen((yyvsp[-1].str)) + strlen((yyvsp[0].str)) + 1);
         strcpy(temp, (yyvsp[-1].str));
@@ -1180,69 +1212,76 @@ yyreduce:
         free((yyvsp[-1].str)); free((yyvsp[0].str));
         (yyval.str) = temp;
     }
-#line 1184 "linguagem.tab.c"
+#line 1216 "linguagem.tab.c"
     break;
 
   case 5: /* declaracao: VAR tipo DOIS_PONTOS lista_ids PONTO_E_VIRGULA  */
-#line 57 "linguagem.y"
-    {
+#line 89 "linguagem.y"
+    { 
         char* buffer = (char*) malloc(strlen((yyvsp[-3].str)) + strlen((yyvsp[-1].str)) + 4);
         sprintf(buffer, "%s %s;\n", (yyvsp[-3].str), (yyvsp[-1].str));
+        char *ids = strdup((yyvsp[-1].str));
+        char *token = strtok(ids, ", ");
+        while (token != NULL) {
+            declare_variable(token, (yyvsp[-3].str));
+            token = strtok(NULL, ", ");
+        }
+        free(ids);
         free((yyvsp[-3].str)); free((yyvsp[-1].str));
         (yyval.str) = buffer;
     }
-#line 1195 "linguagem.tab.c"
+#line 1234 "linguagem.tab.c"
     break;
 
   case 6: /* tipo: INTEIRO  */
-#line 66 "linguagem.y"
+#line 105 "linguagem.y"
               { (yyval.str) = strdup("int"); }
-#line 1201 "linguagem.tab.c"
+#line 1240 "linguagem.tab.c"
     break;
 
   case 7: /* tipo: BOOLEANO  */
-#line 67 "linguagem.y"
+#line 106 "linguagem.y"
                { (yyval.str) = strdup("bool"); }
-#line 1207 "linguagem.tab.c"
+#line 1246 "linguagem.tab.c"
     break;
 
   case 8: /* tipo: TEXTO  */
-#line 68 "linguagem.y"
+#line 107 "linguagem.y"
                { (yyval.str) = strdup("String"); }
-#line 1213 "linguagem.tab.c"
+#line 1252 "linguagem.tab.c"
     break;
 
   case 9: /* lista_ids: IDENTIFICADOR  */
-#line 73 "linguagem.y"
+#line 112 "linguagem.y"
     { (yyval.str) = strdup((yyvsp[0].str)); free((yyvsp[0].str)); }
-#line 1219 "linguagem.tab.c"
+#line 1258 "linguagem.tab.c"
     break;
 
   case 10: /* lista_ids: lista_ids VIRGULA IDENTIFICADOR  */
-#line 75 "linguagem.y"
+#line 114 "linguagem.y"
     { 
         char* temp = (char*) malloc(strlen((yyvsp[-2].str)) + strlen((yyvsp[0].str)) + 3);
         sprintf(temp, "%s, %s", (yyvsp[-2].str), (yyvsp[0].str));
         free((yyvsp[-2].str)); free((yyvsp[0].str));
         (yyval.str) = temp;
     }
-#line 1230 "linguagem.tab.c"
+#line 1269 "linguagem.tab.c"
     break;
 
   case 11: /* config: CONFIG bloco_config FIM  */
-#line 85 "linguagem.y"
+#line 124 "linguagem.y"
     { (yyval.str) = (yyvsp[-1].str); }
-#line 1236 "linguagem.tab.c"
+#line 1275 "linguagem.tab.c"
     break;
 
   case 12: /* bloco_config: %empty  */
-#line 89 "linguagem.y"
+#line 128 "linguagem.y"
     { (yyval.str) = strdup(""); }
-#line 1242 "linguagem.tab.c"
+#line 1281 "linguagem.tab.c"
     break;
 
   case 13: /* bloco_config: bloco_config comando  */
-#line 91 "linguagem.y"
+#line 130 "linguagem.y"
     { 
         char* temp = (char*) malloc(strlen((yyvsp[-1].str)) + strlen((yyvsp[0].str)) + 1);
         strcpy(temp, (yyvsp[-1].str));
@@ -1250,23 +1289,23 @@ yyreduce:
         free((yyvsp[-1].str)); free((yyvsp[0].str));
         (yyval.str) = temp;
     }
-#line 1254 "linguagem.tab.c"
+#line 1293 "linguagem.tab.c"
     break;
 
   case 14: /* repita: REPITA bloco_repita FIM  */
-#line 102 "linguagem.y"
+#line 141 "linguagem.y"
     { (yyval.str) = (yyvsp[-1].str); }
-#line 1260 "linguagem.tab.c"
+#line 1299 "linguagem.tab.c"
     break;
 
   case 15: /* bloco_repita: %empty  */
-#line 106 "linguagem.y"
+#line 145 "linguagem.y"
     { (yyval.str) = strdup(""); }
-#line 1266 "linguagem.tab.c"
+#line 1305 "linguagem.tab.c"
     break;
 
   case 16: /* bloco_repita: bloco_repita comando  */
-#line 108 "linguagem.y"
+#line 147 "linguagem.y"
     { 
         char* temp = (char*) malloc(strlen((yyvsp[-1].str)) + strlen((yyvsp[0].str)) + 1);
         strcpy(temp, (yyvsp[-1].str));
@@ -1274,88 +1313,97 @@ yyreduce:
         free((yyvsp[-1].str)); free((yyvsp[0].str));
         (yyval.str) = temp;
     }
-#line 1278 "linguagem.tab.c"
+#line 1317 "linguagem.tab.c"
     break;
 
   case 17: /* comando: IDENTIFICADOR IGUALDADE NUM PONTO_E_VIRGULA  */
-#line 119 "linguagem.y"
+#line 158 "linguagem.y"
     { 
+        check_variable((yyvsp[-3].str));
         (yyval.str) = (char*) malloc(50);  
         sprintf((yyval.str), "%s = %d;\n", (yyvsp[-3].str), (yyvsp[-1].num));
         free((yyvsp[-3].str));
     }
-#line 1288 "linguagem.tab.c"
+#line 1328 "linguagem.tab.c"
     break;
 
   case 18: /* comando: CONFIGURAR IDENTIFICADOR COMO SAIDA PONTO_E_VIRGULA  */
-#line 125 "linguagem.y"
+#line 165 "linguagem.y"
     {
+        check_variable((yyvsp[-3].str));
         (yyval.str) = (char*) malloc(50);  
         sprintf((yyval.str), "pinMode(%s, OUTPUT);\n", (yyvsp[-3].str));
         free((yyvsp[-3].str));
     }
-#line 1298 "linguagem.tab.c"
+#line 1339 "linguagem.tab.c"
     break;
 
   case 19: /* comando: CONFIGURAR IDENTIFICADOR COMO ENTRADA PONTO_E_VIRGULA  */
-#line 131 "linguagem.y"
+#line 172 "linguagem.y"
     {
+        check_variable((yyvsp[-3].str));
         (yyval.str) = (char*) malloc(50);  
         sprintf((yyval.str), "pinMode(%s, INPUT);\n", (yyvsp[-3].str));
         free((yyvsp[-3].str));
     }
-#line 1308 "linguagem.tab.c"
+#line 1350 "linguagem.tab.c"
     break;
 
   case 20: /* comando: LIGAR IDENTIFICADOR PONTO_E_VIRGULA  */
-#line 137 "linguagem.y"
+#line 179 "linguagem.y"
     {
+        check_variable((yyvsp[-1].str));
         (yyval.str) = (char*) malloc(50);  
         sprintf((yyval.str), "digitalWrite(%s, HIGH);\n", (yyvsp[-1].str));
         free((yyvsp[-1].str));
     }
-#line 1318 "linguagem.tab.c"
+#line 1361 "linguagem.tab.c"
     break;
 
   case 21: /* comando: DESLIGAR IDENTIFICADOR PONTO_E_VIRGULA  */
-#line 143 "linguagem.y"
+#line 186 "linguagem.y"
     {
+        check_variable((yyvsp[-1].str));
         (yyval.str) = (char*) malloc(50);  
         sprintf((yyval.str), "digitalWrite(%s, LOW);\n", (yyvsp[-1].str));
         free((yyvsp[-1].str));
     }
-#line 1328 "linguagem.tab.c"
+#line 1372 "linguagem.tab.c"
     break;
 
   case 22: /* comando: ESPERAR NUM PONTO_E_VIRGULA  */
-#line 149 "linguagem.y"
+#line 193 "linguagem.y"
     {
         (yyval.str) = (char*) malloc(50);  
         sprintf((yyval.str), "delay(%d);\n", (yyvsp[-1].num));
     }
-#line 1337 "linguagem.tab.c"
+#line 1381 "linguagem.tab.c"
     break;
 
   case 23: /* comando: IDENTIFICADOR IGUALDADE LER_DIGITAL IDENTIFICADOR PONTO_E_VIRGULA  */
-#line 154 "linguagem.y"
+#line 198 "linguagem.y"
     {
+        check_variable((yyvsp[-4].str));
+        check_variable((yyvsp[-1].str));
         asprintf(&(yyval.str), "%s = digitalRead(%s);\n", (yyvsp[-4].str), (yyvsp[-1].str));
         free((yyvsp[-4].str)); free((yyvsp[-1].str));
     }
-#line 1346 "linguagem.tab.c"
+#line 1392 "linguagem.tab.c"
     break;
 
   case 24: /* comando: IDENTIFICADOR IGUALDADE LER_ANALOGICO IDENTIFICADOR PONTO_E_VIRGULA  */
-#line 159 "linguagem.y"
+#line 205 "linguagem.y"
     {
+        check_variable((yyvsp[-4].str));
+        check_variable((yyvsp[-1].str));
         asprintf(&(yyval.str), "%s = analogRead(%s);\n", (yyvsp[-4].str), (yyvsp[-1].str));
         free((yyvsp[-4].str)); free((yyvsp[-1].str));
     }
-#line 1355 "linguagem.tab.c"
+#line 1403 "linguagem.tab.c"
     break;
 
 
-#line 1359 "linguagem.tab.c"
+#line 1407 "linguagem.tab.c"
 
       default: break;
     }
@@ -1548,7 +1596,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 165 "linguagem.y"
+#line 213 "linguagem.y"
 
 
 void yyerror(const char *s) {

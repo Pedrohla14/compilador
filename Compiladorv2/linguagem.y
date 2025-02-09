@@ -3,10 +3,42 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef struct Symbol {
+    char *name;
+    char *type;
+    struct Symbol *next;
+} Symbol;
+
+Symbol *symbol_table = NULL;
+
+void declare_variable(const char *name, const char *type) {
+    Symbol *s = (Symbol *) malloc(sizeof(Symbol));
+    s->name = strdup(name);
+    s->type = strdup(type);
+    s->next = symbol_table;
+    symbol_table = s;
+}
+
+int variable_declared(const char *name) {
+    Symbol *current = symbol_table;
+    while (current != NULL) {
+        if (strcmp(current->name, name) == 0) {
+            return 1;
+        }
+        current = current->next;
+    }
+    return 0;
+}
+
+void check_variable(const char *name) {
+    if (!variable_declared(name)) {
+        fprintf(stderr, "Erro semantico: variavel '%s' nao foi declarada\n", name);
+    }
+}
+
 extern FILE *yyin;
 void yyerror(const char *s);
 int yylex();
-
 %}
 
 %union {
@@ -54,9 +86,16 @@ declaracoes:
 
 declaracao:
     VAR tipo DOIS_PONTOS lista_ids PONTO_E_VIRGULA
-    {
+    { 
         char* buffer = (char*) malloc(strlen($2) + strlen($4) + 4);
         sprintf(buffer, "%s %s;\n", $2, $4);
+        char *ids = strdup($4);
+        char *token = strtok(ids, ", ");
+        while (token != NULL) {
+            declare_variable(token, $2);
+            token = strtok(NULL, ", ");
+        }
+        free(ids);
         free($2); free($4);
         $$ = buffer;
     }
@@ -117,30 +156,35 @@ bloco_repita:
 comando:
     IDENTIFICADOR IGUALDADE NUM PONTO_E_VIRGULA 
     { 
+        check_variable($1);
         $$ = (char*) malloc(50);  
         sprintf($$, "%s = %d;\n", $1, $3);
         free($1);
     }
     | CONFIGURAR IDENTIFICADOR COMO SAIDA PONTO_E_VIRGULA 
     {
+        check_variable($2);
         $$ = (char*) malloc(50);  
         sprintf($$, "pinMode(%s, OUTPUT);\n", $2);
         free($2);
     }
     | CONFIGURAR IDENTIFICADOR COMO ENTRADA PONTO_E_VIRGULA 
     {
+        check_variable($2);
         $$ = (char*) malloc(50);  
         sprintf($$, "pinMode(%s, INPUT);\n", $2);
         free($2);
     }
     | LIGAR IDENTIFICADOR PONTO_E_VIRGULA 
     {
+        check_variable($2);
         $$ = (char*) malloc(50);  
         sprintf($$, "digitalWrite(%s, HIGH);\n", $2);
         free($2);
     }
     | DESLIGAR IDENTIFICADOR PONTO_E_VIRGULA 
     {
+        check_variable($2);
         $$ = (char*) malloc(50);  
         sprintf($$, "digitalWrite(%s, LOW);\n", $2);
         free($2);
@@ -152,11 +196,15 @@ comando:
     }
     | IDENTIFICADOR IGUALDADE LER_DIGITAL IDENTIFICADOR PONTO_E_VIRGULA 
     {
+        check_variable($1);
+        check_variable($4);
         asprintf(&$$, "%s = digitalRead(%s);\n", $1, $4);
         free($1); free($4);
     }
     | IDENTIFICADOR IGUALDADE LER_ANALOGICO IDENTIFICADOR PONTO_E_VIRGULA 
     {
+        check_variable($1);
+        check_variable($4);
         asprintf(&$$, "%s = analogRead(%s);\n", $1, $4);
         free($1); free($4);
     }
