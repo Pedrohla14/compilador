@@ -1,6 +1,7 @@
 var inteiro: ledPin;
 var inteiro: botao;
 var inteiro: estadoBotao;
+var inteiro: estadoBotao2;
 
 config
   ledPin = 13;
@@ -11,6 +12,7 @@ fim
 
 repita
   estadoBotao = lerDigital botao;
+  estadoBotao2 = lerAnalogico botao;
   ligar ledPin;
   esperar 1000;
   desligar ledPin;

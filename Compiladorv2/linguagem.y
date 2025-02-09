@@ -155,6 +155,11 @@ comando:
         asprintf(&$$, "%s = digitalRead(%s);\n", $1, $4);
         free($1); free($4);
     }
+    | IDENTIFICADOR IGUALDADE LER_ANALOGICO IDENTIFICADOR PONTO_E_VIRGULA 
+    {
+        asprintf(&$$, "%s = analogRead(%s);\n", $1, $4);
+        free($1); free($4);
+    }
     ;
 
 %%

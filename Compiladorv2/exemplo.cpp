@@ -3,6 +3,7 @@
 int ledPin;
 int botao;
 int estadoBotao;
+int estadoBotao2;
 
 
 void setup() {
@@ -14,6 +15,7 @@ pinMode(botao, INPUT);
 
 void loop() {
 estadoBotao = digitalRead(botao);
+estadoBotao2 = analogRead(botao);
 digitalWrite(ledPin, HIGH);
 delay(1000);
 digitalWrite(ledPin, LOW);
