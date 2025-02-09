@@ -1,11 +1,16 @@
 var inteiro: ledPin;
+var inteiro: botao;
+var inteiro: estadoBotao;
 
 config
   ledPin = 13;
   configurar ledPin como saida;
+  botao = 12;
+  configurar botao como entrada;
 fim
 
 repita
+  estadoBotao = lerDigital botao;
   ligar ledPin;
   esperar 1000;
   desligar ledPin;

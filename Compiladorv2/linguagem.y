@@ -150,6 +150,11 @@ comando:
         $$ = (char*) malloc(50);  
         sprintf($$, "delay(%d);\n", $2);
     }
+    | IDENTIFICADOR IGUALDADE LER_DIGITAL IDENTIFICADOR PONTO_E_VIRGULA 
+    {
+        asprintf(&$$, "%s = digitalRead(%s);\n", $1, $4);
+        free($1); free($4);
+    }
     ;
 
 %%
