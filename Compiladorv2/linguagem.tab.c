@@ -528,16 +528,16 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  3
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   63
+#define YYLAST   70
 
 /* YYNTOKENS -- Number of terminals.  */
 #define YYNTOKENS  52
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  11
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  27
+#define YYNRULES  29
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  68
+#define YYNSTATES  74
 
 /* YYMAXUTOK -- Last valid token kind.  */
 #define YYMAXUTOK   306
@@ -591,9 +591,9 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    68,    68,    76,    77,    88,   105,   106,   107,   111,
-     113,   123,   128,   129,   140,   145,   146,   157,   164,   171,
-     176,   184,   191,   198,   205,   212,   217,   224
+       0,    68,    68,    76,    77,    88,   104,   105,   106,   109,
+     111,   121,   126,   127,   138,   143,   144,   155,   162,   170,
+     185,   192,   197,   205,   212,   219,   226,   233,   238,   245
 };
 #endif
 
@@ -644,13 +644,14 @@ yysymbol_name (yysymbol_kind_t yysymbol)
    STATE-NUM.  */
 static const yytype_int8 yypact[] =
 {
-     -39,     1,    -2,   -39,   -39,     6,   -39,     2,    -5,   -39,
-     -39,   -39,   -38,   -39,   -39,   -28,   -39,    18,    21,    26,
-      34,    33,    35,   -39,    36,    -3,     3,    25,    -9,    -8,
-      -7,    13,    14,   -39,   -17,   -39,   -39,    -4,    43,    44,
-      20,   -39,   -39,   -39,    22,    23,    46,   -39,   -39,     4,
-       5,     7,     8,    49,    27,   -39,   -39,   -39,   -39,   -39,
-      24,     9,    10,    54,   -39,   -39,    11,   -39
+     -39,     7,    -4,   -39,   -39,    31,   -39,    -6,    -5,   -39,
+     -39,   -39,   -38,   -39,   -39,   -24,   -39,    21,    25,    28,
+      30,    33,    34,    39,   -39,    40,    10,     6,    24,    -3,
+      -2,    41,    -1,    15,    19,   -39,   -34,   -39,   -39,     2,
+       3,    47,    50,     5,   -39,   -39,     8,   -39,    29,    27,
+      51,   -39,   -39,   -39,     9,    11,    12,    13,   -39,    58,
+       1,   -39,   -39,   -39,   -39,   -39,    36,    16,    17,    63,
+     -39,   -39,    18,   -39
 };
 
 /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -660,25 +661,26 @@ static const yytype_int8 yydefact[] =
 {
        3,     0,     0,     1,    12,     0,     4,     0,     0,     6,
        7,     8,     0,    15,     2,     0,    11,     0,     0,     0,
-       0,     0,     0,    13,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     9,     0,    14,    16,     0,     0,     0,
-       0,    23,    24,    25,     0,     0,     0,     5,    17,     0,
-       0,     0,     0,     0,     0,    10,    26,    27,    21,    22,
-       0,     0,     0,     0,    19,    18,     0,    20
+       0,     0,     0,     0,    13,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     9,     0,    14,    16,     0,
+       0,     0,     0,     0,    25,    26,     0,    27,     0,     0,
+       0,     5,    17,    18,     0,     0,     0,     0,    19,     0,
+       0,    10,    28,    29,    23,    24,     0,     0,     0,     0,
+      21,    20,     0,    22
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
      -39,   -39,   -39,   -39,   -39,   -39,   -39,   -39,   -39,   -39,
-      38
+      44
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-       0,     1,     2,     6,    12,    34,     7,     8,    14,    25,
-      23
+       0,     1,     2,     6,    12,    36,     7,     8,    14,    26,
+      24
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -686,24 +688,26 @@ static const yytype_int8 yydefgoto[] =
    number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int8 yytable[] =
 {
-      15,     3,    15,    16,     4,    35,    37,     5,    17,    13,
-      17,    24,    18,    19,    18,    19,     9,    10,    11,    20,
-      26,    20,    21,    27,    21,    22,    28,    22,    38,    39,
-      61,    29,    62,    46,    47,    51,    52,    30,    31,    40,
-      32,    33,    41,    42,    43,    44,    45,    48,    49,    50,
-      53,    55,    60,    63,    54,    56,    57,    66,    58,    59,
-      64,    65,    67,    36
+      15,    13,     4,    16,    67,     5,    68,     3,    17,    39,
+      40,    25,    18,    19,    20,    15,    50,    51,    37,    21,
+      56,    57,    22,    17,    27,    23,    28,    18,    19,    20,
+      29,    41,    42,    30,    21,    31,    32,    22,    43,    33,
+      23,     9,    10,    11,    34,    35,    46,    48,    44,    45,
+      47,    49,    54,    52,    53,    55,    61,    59,    60,    58,
+      62,    66,    63,    64,    65,    69,    72,    70,    71,    73,
+      38
 };
 
 static const yytype_int8 yycheck[] =
 {
-       5,     0,     5,     8,     6,     8,     3,     9,    13,     7,
-      13,    49,    17,    18,    17,    18,    10,    11,    12,    24,
-      48,    24,    27,     5,    27,    30,     5,    30,    25,    26,
-       3,     5,     5,    50,    51,    15,    16,     3,     5,    14,
-       5,     5,    51,    51,    51,    32,    32,    51,     5,     5,
-      28,     5,     3,    29,    31,    51,    51,     3,    51,    51,
-      51,    51,    51,    25
+       5,     7,     6,     8,     3,     9,     5,     0,    13,     3,
+       4,    49,    17,    18,    19,     5,    50,    51,     8,    24,
+      15,    16,    27,    13,    48,    30,     5,    17,    18,    19,
+       5,    25,    26,     5,    24,     5,     3,    27,    14,     5,
+      30,    10,    11,    12,     5,     5,     5,    32,    51,    51,
+      51,    32,     5,    51,    51,     5,     5,    28,    31,    51,
+      51,     3,    51,    51,    51,    29,     3,    51,    51,    51,
+      26
 };
 
 /* YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
@@ -712,11 +716,12 @@ static const yytype_int8 yystos[] =
 {
        0,    53,    54,     0,     6,     9,    55,    58,    59,    10,
       11,    12,    56,     7,    60,     5,     8,    13,    17,    18,
-      24,    27,    30,    62,    49,    61,    48,     5,     5,     5,
-       3,     5,     5,     5,    57,     8,    62,     3,    25,    26,
-      14,    51,    51,    51,    32,    32,    50,    51,    51,     5,
-       5,    15,    16,    28,    31,     5,    51,    51,    51,    51,
-       3,     3,     5,    29,    51,    51,     3,    51
+      19,    24,    27,    30,    62,    49,    61,    48,     5,     5,
+       5,     5,     3,     5,     5,     5,    57,     8,    62,     3,
+       4,    25,    26,    14,    51,    51,     5,    51,    32,    32,
+      50,    51,    51,    51,     5,     5,    15,    16,    51,    28,
+      31,     5,    51,    51,    51,    51,     3,     3,     5,    29,
+      51,    51,     3,    51
 };
 
 /* YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.  */
@@ -724,15 +729,15 @@ static const yytype_int8 yyr1[] =
 {
        0,    52,    53,    54,    54,    55,    56,    56,    56,    57,
       57,    58,    59,    59,    60,    61,    61,    62,    62,    62,
-      62,    62,    62,    62,    62,    62,    62,    62
+      62,    62,    62,    62,    62,    62,    62,    62,    62,    62
 };
 
 /* YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr2[] =
 {
        0,     2,     3,     0,     2,     5,     1,     1,     1,     1,
-       3,     3,     0,     2,     3,     0,     2,     4,     6,     6,
-       8,     5,     5,     3,     3,     3,     5,     5
+       3,     3,     0,     2,     3,     0,     2,     4,     4,     4,
+       6,     6,     8,     5,     5,     3,     3,     3,     5,     5
 };
 
 
@@ -1201,13 +1206,13 @@ yyreduce:
         printf("#include <Arduino.h>\n\n%s\n\nvoid setup() {\n%s}\n\nvoid loop() {\n%s}\n", (yyvsp[-2].str), (yyvsp[-1].str), (yyvsp[0].str));
         free((yyvsp[-2].str)); free((yyvsp[-1].str)); free((yyvsp[0].str));
     }
-#line 1205 "linguagem.tab.c"
+#line 1210 "linguagem.tab.c"
     break;
 
   case 3: /* declaracoes: %empty  */
 #line 76 "linguagem.y"
     { (yyval.str) = strdup(""); }
-#line 1211 "linguagem.tab.c"
+#line 1216 "linguagem.tab.c"
     break;
 
   case 4: /* declaracoes: declaracoes declaracao  */
@@ -1219,7 +1224,7 @@ yyreduce:
         free((yyvsp[-1].str)); free((yyvsp[0].str));
         (yyval.str) = temp;
     }
-#line 1223 "linguagem.tab.c"
+#line 1228 "linguagem.tab.c"
     break;
 
   case 5: /* declaracao: VAR tipo DOIS_PONTOS lista_ids PONTO_E_VIRGULA  */
@@ -1237,58 +1242,58 @@ yyreduce:
         free((yyvsp[-3].str)); free((yyvsp[-1].str));
         (yyval.str) = buffer;
     }
-#line 1241 "linguagem.tab.c"
+#line 1246 "linguagem.tab.c"
     break;
 
   case 6: /* tipo: INTEIRO  */
-#line 105 "linguagem.y"
+#line 104 "linguagem.y"
               { (yyval.str) = strdup("int"); }
-#line 1247 "linguagem.tab.c"
+#line 1252 "linguagem.tab.c"
     break;
 
   case 7: /* tipo: BOOLEANO  */
-#line 106 "linguagem.y"
-               { (yyval.str) = strdup("bool"); }
-#line 1253 "linguagem.tab.c"
+#line 105 "linguagem.y"
+             { (yyval.str) = strdup("bool"); }
+#line 1258 "linguagem.tab.c"
     break;
 
   case 8: /* tipo: TEXTO  */
-#line 107 "linguagem.y"
-               { (yyval.str) = strdup("String"); }
-#line 1259 "linguagem.tab.c"
+#line 106 "linguagem.y"
+             { (yyval.str) = strdup("String"); }
+#line 1264 "linguagem.tab.c"
     break;
 
   case 9: /* lista_ids: IDENTIFICADOR  */
-#line 112 "linguagem.y"
+#line 110 "linguagem.y"
     { (yyval.str) = strdup((yyvsp[0].str)); free((yyvsp[0].str)); }
-#line 1265 "linguagem.tab.c"
+#line 1270 "linguagem.tab.c"
     break;
 
   case 10: /* lista_ids: lista_ids VIRGULA IDENTIFICADOR  */
-#line 114 "linguagem.y"
+#line 112 "linguagem.y"
     { 
         char* temp = (char*) malloc(strlen((yyvsp[-2].str)) + strlen((yyvsp[0].str)) + 3);
         sprintf(temp, "%s, %s", (yyvsp[-2].str), (yyvsp[0].str));
         free((yyvsp[-2].str)); free((yyvsp[0].str));
         (yyval.str) = temp;
     }
-#line 1276 "linguagem.tab.c"
+#line 1281 "linguagem.tab.c"
     break;
 
   case 11: /* config: CONFIG bloco_config FIM  */
-#line 124 "linguagem.y"
+#line 122 "linguagem.y"
     { (yyval.str) = (yyvsp[-1].str); }
-#line 1282 "linguagem.tab.c"
+#line 1287 "linguagem.tab.c"
     break;
 
   case 12: /* bloco_config: %empty  */
-#line 128 "linguagem.y"
+#line 126 "linguagem.y"
     { (yyval.str) = strdup(""); }
-#line 1288 "linguagem.tab.c"
+#line 1293 "linguagem.tab.c"
     break;
 
   case 13: /* bloco_config: bloco_config comando  */
-#line 130 "linguagem.y"
+#line 128 "linguagem.y"
     { 
         char* temp = (char*) malloc(strlen((yyvsp[-1].str)) + strlen((yyvsp[0].str)) + 1);
         strcpy(temp, (yyvsp[-1].str));
@@ -1296,23 +1301,23 @@ yyreduce:
         free((yyvsp[-1].str)); free((yyvsp[0].str));
         (yyval.str) = temp;
     }
-#line 1300 "linguagem.tab.c"
+#line 1305 "linguagem.tab.c"
     break;
 
   case 14: /* repita: REPITA bloco_repita FIM  */
-#line 141 "linguagem.y"
+#line 139 "linguagem.y"
     { (yyval.str) = (yyvsp[-1].str); }
-#line 1306 "linguagem.tab.c"
+#line 1311 "linguagem.tab.c"
     break;
 
   case 15: /* bloco_repita: %empty  */
-#line 145 "linguagem.y"
+#line 143 "linguagem.y"
     { (yyval.str) = strdup(""); }
-#line 1312 "linguagem.tab.c"
+#line 1317 "linguagem.tab.c"
     break;
 
   case 16: /* bloco_repita: bloco_repita comando  */
-#line 147 "linguagem.y"
+#line 145 "linguagem.y"
     { 
         char* temp = (char*) malloc(strlen((yyvsp[-1].str)) + strlen((yyvsp[0].str)) + 1);
         strcpy(temp, (yyvsp[-1].str));
@@ -1320,22 +1325,52 @@ yyreduce:
         free((yyvsp[-1].str)); free((yyvsp[0].str));
         (yyval.str) = temp;
     }
-#line 1324 "linguagem.tab.c"
+#line 1329 "linguagem.tab.c"
     break;
 
   case 17: /* comando: IDENTIFICADOR IGUALDADE NUM PONTO_E_VIRGULA  */
-#line 158 "linguagem.y"
+#line 156 "linguagem.y"
     { 
         check_variable((yyvsp[-3].str));
         (yyval.str) = (char*) malloc(50);  
         sprintf((yyval.str), "%s = %d;\n", (yyvsp[-3].str), (yyvsp[-1].num));
         free((yyvsp[-3].str));
     }
-#line 1335 "linguagem.tab.c"
+#line 1340 "linguagem.tab.c"
     break;
 
-  case 18: /* comando: AJUSTAR_PWM IDENTIFICADOR COM VALOR IDENTIFICADOR PONTO_E_VIRGULA  */
-#line 164 "linguagem.y"
+  case 18: /* comando: IDENTIFICADOR IGUALDADE STRING PONTO_E_VIRGULA  */
+#line 163 "linguagem.y"
+    { 
+        check_variable((yyvsp[-3].str));
+        (yyval.str) = (char*) malloc(strlen((yyvsp[-3].str)) + strlen((yyvsp[-1].str)) + 4);
+        sprintf((yyval.str), "%s = %s;\n", (yyvsp[-3].str), (yyvsp[-1].str));  // Atribui a string diretamente
+        free((yyvsp[-3].str)); free((yyvsp[-1].str));
+    }
+#line 1351 "linguagem.tab.c"
+    break;
+
+  case 19: /* comando: CONECTAR_WIFI IDENTIFICADOR IDENTIFICADOR PONTO_E_VIRGULA  */
+#line 171 "linguagem.y"
+    {
+        check_variable((yyvsp[-2].str));
+        check_variable((yyvsp[-1].str));
+        asprintf(&(yyval.str), 
+            "WiFi.begin(%s.c_str(), %s.c_str());\n"
+            "while (WiFi.status() != WL_CONNECTED) {\n"
+            "    delay(500);\n"
+            "    Serial.println(\"Conectando ao WiFi...\");\n"
+            "}\n"
+            "Serial.println(\"Conectado ao WiFi!\");\n",
+            (yyvsp[-2].str), (yyvsp[-1].str));
+        free((yyvsp[-2].str)); 
+        free((yyvsp[-1].str));
+    }
+#line 1370 "linguagem.tab.c"
+    break;
+
+  case 20: /* comando: AJUSTAR_PWM IDENTIFICADOR COM VALOR IDENTIFICADOR PONTO_E_VIRGULA  */
+#line 185 "linguagem.y"
                                                                        {
     check_variable((yyvsp[-4].str));  
     check_variable((yyvsp[-1].str)); 
@@ -1343,21 +1378,21 @@ yyreduce:
     free((yyvsp[-4].str));  
     free((yyvsp[-1].str));  
     }
-#line 1347 "linguagem.tab.c"
+#line 1382 "linguagem.tab.c"
     break;
 
-  case 19: /* comando: AJUSTAR_PWM IDENTIFICADOR COM VALOR NUM PONTO_E_VIRGULA  */
-#line 171 "linguagem.y"
+  case 21: /* comando: AJUSTAR_PWM IDENTIFICADOR COM VALOR NUM PONTO_E_VIRGULA  */
+#line 192 "linguagem.y"
                                                               {
         check_variable((yyvsp[-4].str));  
         asprintf(&(yyval.str), "ledcWrite(%s, %d);\n", (yyvsp[-4].str), (yyvsp[-1].num)); 
         free((yyvsp[-4].str));  
     }
-#line 1357 "linguagem.tab.c"
+#line 1392 "linguagem.tab.c"
     break;
 
-  case 20: /* comando: CONFIGURAR_PWM IDENTIFICADOR COM FREQUENCIA NUM RESOLUCAO NUM PONTO_E_VIRGULA  */
-#line 177 "linguagem.y"
+  case 22: /* comando: CONFIGURAR_PWM IDENTIFICADOR COM FREQUENCIA NUM RESOLUCAO NUM PONTO_E_VIRGULA  */
+#line 198 "linguagem.y"
     { 
         check_variable((yyvsp[-6].str));
         (yyval.str) = (char*) malloc(100);  
@@ -1365,86 +1400,86 @@ yyreduce:
                 (yyvsp[-6].str), (yyvsp[-3].num), (yyvsp[-1].num), (yyvsp[-6].str), (yyvsp[-6].str)); 
         free((yyvsp[-6].str));  
     }
-#line 1369 "linguagem.tab.c"
+#line 1404 "linguagem.tab.c"
     break;
 
-  case 21: /* comando: CONFIGURAR IDENTIFICADOR COMO SAIDA PONTO_E_VIRGULA  */
-#line 185 "linguagem.y"
+  case 23: /* comando: CONFIGURAR IDENTIFICADOR COMO SAIDA PONTO_E_VIRGULA  */
+#line 206 "linguagem.y"
     {
         check_variable((yyvsp[-3].str));
         (yyval.str) = (char*) malloc(50);  
         sprintf((yyval.str), "pinMode(%s, OUTPUT);\n", (yyvsp[-3].str));
         free((yyvsp[-3].str));
     }
-#line 1380 "linguagem.tab.c"
+#line 1415 "linguagem.tab.c"
     break;
 
-  case 22: /* comando: CONFIGURAR IDENTIFICADOR COMO ENTRADA PONTO_E_VIRGULA  */
-#line 192 "linguagem.y"
+  case 24: /* comando: CONFIGURAR IDENTIFICADOR COMO ENTRADA PONTO_E_VIRGULA  */
+#line 213 "linguagem.y"
     {
         check_variable((yyvsp[-3].str));
         (yyval.str) = (char*) malloc(50);  
         sprintf((yyval.str), "pinMode(%s, INPUT);\n", (yyvsp[-3].str));
         free((yyvsp[-3].str));
     }
-#line 1391 "linguagem.tab.c"
+#line 1426 "linguagem.tab.c"
     break;
 
-  case 23: /* comando: LIGAR IDENTIFICADOR PONTO_E_VIRGULA  */
-#line 199 "linguagem.y"
+  case 25: /* comando: LIGAR IDENTIFICADOR PONTO_E_VIRGULA  */
+#line 220 "linguagem.y"
     {
         check_variable((yyvsp[-1].str));
         (yyval.str) = (char*) malloc(50);  
         sprintf((yyval.str), "digitalWrite(%s, HIGH);\n", (yyvsp[-1].str));
         free((yyvsp[-1].str));
     }
-#line 1402 "linguagem.tab.c"
+#line 1437 "linguagem.tab.c"
     break;
 
-  case 24: /* comando: DESLIGAR IDENTIFICADOR PONTO_E_VIRGULA  */
-#line 206 "linguagem.y"
+  case 26: /* comando: DESLIGAR IDENTIFICADOR PONTO_E_VIRGULA  */
+#line 227 "linguagem.y"
     {
         check_variable((yyvsp[-1].str));
         (yyval.str) = (char*) malloc(50);  
         sprintf((yyval.str), "digitalWrite(%s, LOW);\n", (yyvsp[-1].str));
         free((yyvsp[-1].str));
     }
-#line 1413 "linguagem.tab.c"
+#line 1448 "linguagem.tab.c"
     break;
 
-  case 25: /* comando: ESPERAR NUM PONTO_E_VIRGULA  */
-#line 213 "linguagem.y"
+  case 27: /* comando: ESPERAR NUM PONTO_E_VIRGULA  */
+#line 234 "linguagem.y"
     {
         (yyval.str) = (char*) malloc(50);  
         sprintf((yyval.str), "delay(%d);\n", (yyvsp[-1].num));
     }
-#line 1422 "linguagem.tab.c"
+#line 1457 "linguagem.tab.c"
     break;
 
-  case 26: /* comando: IDENTIFICADOR IGUALDADE LER_DIGITAL IDENTIFICADOR PONTO_E_VIRGULA  */
-#line 218 "linguagem.y"
+  case 28: /* comando: IDENTIFICADOR IGUALDADE LER_DIGITAL IDENTIFICADOR PONTO_E_VIRGULA  */
+#line 239 "linguagem.y"
     {
         check_variable((yyvsp[-4].str));
         check_variable((yyvsp[-1].str));
         asprintf(&(yyval.str), "%s = digitalRead(%s);\n", (yyvsp[-4].str), (yyvsp[-1].str));
         free((yyvsp[-4].str)); free((yyvsp[-1].str));
     }
-#line 1433 "linguagem.tab.c"
+#line 1468 "linguagem.tab.c"
     break;
 
-  case 27: /* comando: IDENTIFICADOR IGUALDADE LER_ANALOGICO IDENTIFICADOR PONTO_E_VIRGULA  */
-#line 225 "linguagem.y"
+  case 29: /* comando: IDENTIFICADOR IGUALDADE LER_ANALOGICO IDENTIFICADOR PONTO_E_VIRGULA  */
+#line 246 "linguagem.y"
     {
         check_variable((yyvsp[-4].str));
         check_variable((yyvsp[-1].str));
         asprintf(&(yyval.str), "%s = analogRead(%s);\n", (yyvsp[-4].str), (yyvsp[-1].str));
         free((yyvsp[-4].str)); free((yyvsp[-1].str));
     }
-#line 1444 "linguagem.tab.c"
+#line 1479 "linguagem.tab.c"
     break;
 
 
-#line 1448 "linguagem.tab.c"
+#line 1483 "linguagem.tab.c"
 
       default: break;
     }
@@ -1637,7 +1672,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 233 "linguagem.y"
+#line 254 "linguagem.y"
 
 
 void yyerror(const char *s) {

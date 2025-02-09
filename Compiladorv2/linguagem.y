@@ -100,13 +100,11 @@ declaracao:
         $$ = buffer;
     }
     ;
-
 tipo:
     INTEIRO   { $$ = strdup("int"); }
-    | BOOLEANO { $$ = strdup("bool"); }
-    | TEXTO    { $$ = strdup("String"); }
-    ;
-
+  | BOOLEANO { $$ = strdup("bool"); }
+  | TEXTO    { $$ = strdup("String"); }
+  ;
 lista_ids:
     IDENTIFICADOR 
     { $$ = strdup($1); free($1); }
@@ -160,6 +158,29 @@ comando:
         $$ = (char*) malloc(50);  
         sprintf($$, "%s = %d;\n", $1, $3);
         free($1);
+    }
+    | IDENTIFICADOR IGUALDADE STRING PONTO_E_VIRGULA 
+    { 
+        check_variable($1);
+        $$ = (char*) malloc(strlen($1) + strlen($3) + 4);
+        sprintf($$, "%s = %s;\n", $1, $3);  // Atribui a string diretamente
+        free($1); free($3);
+    }
+    ;
+    | CONECTAR_WIFI IDENTIFICADOR IDENTIFICADOR PONTO_E_VIRGULA
+    {
+        check_variable($2);
+        check_variable($3);
+        asprintf(&$$, 
+            "WiFi.begin(%s.c_str(), %s.c_str());\n"
+            "while (WiFi.status() != WL_CONNECTED) {\n"
+            "    delay(500);\n"
+            "    Serial.println(\"Conectando ao WiFi...\");\n"
+            "}\n"
+            "Serial.println(\"Conectado ao WiFi!\");\n",
+            $2, $3);
+        free($2); 
+        free($3);
     }
     |AJUSTAR_PWM IDENTIFICADOR COM VALOR IDENTIFICADOR PONTO_E_VIRGULA {
     check_variable($2);  

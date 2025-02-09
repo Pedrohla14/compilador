@@ -5,6 +5,8 @@ int botao;
 int estadoBotao;
 int estadoBotao2;
 int brilho;
+String ssid;
+String senha;
 
 
 void setup() {
@@ -13,6 +15,8 @@ pinMode(ledPin, OUTPUT);
 botao = 12;
 pinMode(botao, INPUT);
 brilho = 128;
+ssid = "MinhaRedeWiFi";
+senha = "MinhaSenhaWiFi";
 }
 
 void loop() {

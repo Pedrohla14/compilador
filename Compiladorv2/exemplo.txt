@@ -3,6 +3,8 @@ var inteiro: botao;
 var inteiro: estadoBotao;
 var inteiro: estadoBotao2;
 var inteiro: brilho;
+var texto: ssid;
+var texto: senha;
 
 config
   ledPin = 13;
@@ -10,6 +12,8 @@ config
   botao = 12;
   configurar botao como entrada;
   brilho = 128;
+  ssid = "MinhaRedeWiFi";
+  senha = "MinhaSenhaWiFi";
 fim
 
 repita
