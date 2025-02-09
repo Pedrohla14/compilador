@@ -1,13 +1,45 @@
 var inteiro: ledPin;
+var inteiro: botao;
+var inteiro: estadoBotao;
+var inteiro: estadoBotao2;
+var inteiro: brilho;
+var texto: ssid;
+var texto: senha;
 
 config
   ledPin = 13;
   configurar ledPin como saida;
+  botao = 12;
+  configurar botao como entrada;
+  brilho = 128;
+  ssid = "MinhaRedeWiFi";
+  senha = "MinhaSenhaWiFi";
+  configurarSerial 115200;
+  conectarWifi ssid senha;
 fim
 
 repita
+  estadoBotao = lerDigital botao;
+  estadoBotao2 = lerAnalogico botao;
+  ajustarPWM ledPin com valor brilho; 
   ligar ledPin;
   esperar 1000;
   desligar ledPin;
   esperar 1000;
+
+
+  escreverSerial "Botão pressionado!";
+  enquanto
+    ajustarPWM ledPin com valor brilho;
+    esperar 1000;
+  fim
+
+  se estadoBotao == 1 entao
+      ligar ledPin;
+  senao
+      desligar ledPin;
+  fim
+  se estadoBotao == 1 entao
+      ligar ledPin;
+  fim
 fim
