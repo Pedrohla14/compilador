@@ -6,7 +6,7 @@ bison -d -o linguagem.tab.c linguagem.y
 flex -o lex.yy.c linguagem.l
 
 # Compila tudo
-gcc -o tradutor linguagem.tab.c lex.yy.c -lfl
+g++ -o tradutor linguagem.tab.c lex.yy.c -lfl
 
 # Executa o tradutor
 ./tradutor exemplo.txt > exemplo.cpp
