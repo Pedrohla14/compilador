@@ -14,6 +14,7 @@ config
   brilho = 128;
   ssid = "MinhaRedeWiFi";
   senha = "MinhaSenhaWiFi";
+  configurarSerial 115200;
   conectarWifi ssid senha;
 fim
 
@@ -25,4 +26,7 @@ repita
   esperar 1000;
   desligar ledPin;
   esperar 1000;
+
+
+  escreverSerial "Botão pressionado!";
 fim

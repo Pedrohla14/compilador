@@ -168,7 +168,7 @@ comando:
         sprintf($$, "%s = %s;\n", $1, $3);  // Atribui a string diretamente
         free($1); free($3);
     }
-    ;
+   
     | CONECTAR_WIFI IDENTIFICADOR IDENTIFICADOR PONTO_E_VIRGULA
     {
         check_variable($2);
@@ -250,6 +250,24 @@ comando:
         check_variable($4);
         asprintf(&$$, "%s = analogRead(%s);\n", $1, $4);
         free($1); free($4);
+    }
+
+    
+    |CONFIGURAR_SERIAL NUM PONTO_E_VIRGULA
+    {
+        $$ = (char*) malloc(50);
+        sprintf($$, "Serial.begin(%d);\n", $2);  // Configura o baud rate
+    }
+    | ESCREVER_SERIAL STRING PONTO_E_VIRGULA
+    {
+        $$ = (char*) malloc(100);
+        sprintf($$, "Serial.println(%s);\n", $2);  // Envia mensagem pela serial
+    }
+    | IDENTIFICADOR IGUALDADE LER_SERIAL PONTO_E_VIRGULA
+    {
+        check_variable($1);
+        $$ = (char*) malloc(50);
+        sprintf($$, "%s = Serial.readString();\n", $1);  // Lê mensagem da serial
     }
     ;
 

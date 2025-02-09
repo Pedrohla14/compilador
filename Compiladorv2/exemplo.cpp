@@ -18,6 +18,7 @@ pinMode(botao, INPUT);
 brilho = 128;
 ssid = "MinhaRedeWiFi";
 senha = "MinhaSenhaWiFi";
+Serial.begin(115200);
 WiFi.begin(ssid.c_str(), senha.c_str());
 while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -34,4 +35,5 @@ digitalWrite(ledPin, HIGH);
 delay(1000);
 digitalWrite(ledPin, LOW);
 delay(1000);
+Serial.println("Botão pressionado!");
 }
