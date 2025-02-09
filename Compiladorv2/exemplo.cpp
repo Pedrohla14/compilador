@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <WiFi.h>
 
 int ledPin;
 int botao;
@@ -17,6 +18,12 @@ pinMode(botao, INPUT);
 brilho = 128;
 ssid = "MinhaRedeWiFi";
 senha = "MinhaSenhaWiFi";
+WiFi.begin(ssid.c_str(), senha.c_str());
+while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.println("Conectando ao WiFi...");
+}
+Serial.println("Conectado ao WiFi!");
 }
 
 void loop() {

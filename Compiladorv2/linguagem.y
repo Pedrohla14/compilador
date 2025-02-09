@@ -65,9 +65,11 @@ int yylex();
 %%
 
 programa:
-    declaracoes config repita
+   declaracoes config repita
     { 
-        printf("#include <Arduino.h>\n\n%s\n\nvoid setup() {\n%s}\n\nvoid loop() {\n%s}\n", $1, $2, $3);
+        printf("#include <Arduino.h>\n");
+        printf("#include <WiFi.h>\n\n");  // Adiciona o include do WiFi.h
+        printf("%s\n\nvoid setup() {\n%s}\n\nvoid loop() {\n%s}\n", $1, $2, $3);
         free($1); free($2); free($3);
     }
     ;
