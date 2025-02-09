@@ -34,7 +34,7 @@ int yylex();
 
 programa:
     declaracoes config repita
-    {
+    { 
         printf("#include <Arduino.h>\n\n%s\n\nvoid setup() {\n%s}\n\nvoid loop() {\n%s}\n", $1, $2, $3);
         free($1); free($2); free($3);
     }
@@ -42,19 +42,20 @@ programa:
 
 declaracoes:
     { $$ = strdup(""); }
-    | declaracoes declaracao { 
-        char* temp = malloc(strlen($1) + strlen($2) + 1);
+    | declaracoes declaracao 
+    { 
+        char* temp = (char*) malloc(strlen($1) + strlen($2) + 1);
         strcpy(temp, $1);
         strcat(temp, $2);
         free($1); free($2);
         $$ = temp;
-      }
+    }
     ;
 
 declaracao:
     VAR tipo DOIS_PONTOS lista_ids PONTO_E_VIRGULA
     {
-        char* buffer = malloc(strlen($2) + strlen($4) + 4);
+        char* buffer = (char*) malloc(strlen($2) + strlen($4) + 4);
         sprintf(buffer, "%s %s;\n", $2, $4);
         free($2); free($4);
         $$ = buffer;
@@ -68,78 +69,87 @@ tipo:
     ;
 
 lista_ids:
-    IDENTIFICADOR { $$ = strdup($1); free($1); }
+    IDENTIFICADOR 
+    { $$ = strdup($1); free($1); }
     | lista_ids VIRGULA IDENTIFICADOR 
     { 
-        char* temp = malloc(strlen($1) + strlen($3) + 3);
+        char* temp = (char*) malloc(strlen($1) + strlen($3) + 3);
         sprintf(temp, "%s, %s", $1, $3);
         free($1); free($3);
         $$ = temp;
-      }
+    }
     ;
 
 config:
-    CONFIG bloco_config FIM { $$ = $2; }
+    CONFIG bloco_config FIM 
+    { $$ = $2; }
     ;
 
 bloco_config:
     { $$ = strdup(""); }
     | bloco_config comando 
     { 
-        char* temp = malloc(strlen($1) + strlen($2) + 1);
+        char* temp = (char*) malloc(strlen($1) + strlen($2) + 1);
         strcpy(temp, $1);
         strcat(temp, $2);
         free($1); free($2);
         $$ = temp;
-      }
+    }
     ;
 
 repita:
-    REPITA bloco_repita FIM { $$ = $2; }
+    REPITA bloco_repita FIM 
+    { $$ = $2; }
     ;
 
 bloco_repita:
     { $$ = strdup(""); }
     | bloco_repita comando 
     { 
-        char* temp = malloc(strlen($1) + strlen($2) + 1);
+        char* temp = (char*) malloc(strlen($1) + strlen($2) + 1);
         strcpy(temp, $1);
         strcat(temp, $2);
         free($1); free($2);
         $$ = temp;
-      }
+    }
     ;
 
 comando:
     IDENTIFICADOR IGUALDADE NUM PONTO_E_VIRGULA 
     { 
-        $$ = malloc(50);
+        $$ = (char*) malloc(50);  
         sprintf($$, "%s = %d;\n", $1, $3);
         free($1);
-      }
+    }
     | CONFIGURAR IDENTIFICADOR COMO SAIDA PONTO_E_VIRGULA 
     {
-        $$ = malloc(50);
+        $$ = (char*) malloc(50);  
         sprintf($$, "pinMode(%s, OUTPUT);\n", $2);
         free($2);
-      }
+    }
+    | CONFIGURAR IDENTIFICADOR COMO ENTRADA PONTO_E_VIRGULA 
+    {
+        $$ = (char*) malloc(50);  
+        sprintf($$, "pinMode(%s, INPUT);\n", $2);
+        free($2);
+    }
     | LIGAR IDENTIFICADOR PONTO_E_VIRGULA 
     {
-        $$ = malloc(50);
+        $$ = (char*) malloc(50);  
         sprintf($$, "digitalWrite(%s, HIGH);\n", $2);
         free($2);
-      }
+    }
     | DESLIGAR IDENTIFICADOR PONTO_E_VIRGULA 
     {
-        $$ = malloc(50);
+        $$ = (char*) malloc(50);  
         sprintf($$, "digitalWrite(%s, LOW);\n", $2);
         free($2);
-      }
+    }
     | ESPERAR NUM PONTO_E_VIRGULA 
     {
-        $$ = malloc(50);
+        $$ = (char*) malloc(50);  
         sprintf($$, "delay(%d);\n", $2);
-      }
+    }
     ;
 
 %%

@@ -1,0 +1,16 @@
+var inteiro: ledPin;
+var inteiro: ledPin2;
+
+config
+  ledPin = 13;
+  ledpin2 = 14;
+  configurar ledPin como saida;
+  configurar ledPin2 como entrada;
+fim
+
+repita
+  ligar ledPin;
+  esperar 1000;
+  desligar ledPin;
+  esperar 1000;
+fim

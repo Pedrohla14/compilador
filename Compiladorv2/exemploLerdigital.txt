@@ -1,0 +1,10 @@
+var inteiro: botao, estadoBotao;
+
+config
+  botao = 12;
+  configurar botao como entrada;
+fim
+
+repita
+  estadoBotao = lerDigital botao;
+fim
