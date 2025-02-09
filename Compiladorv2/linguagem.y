@@ -123,6 +123,12 @@ comando:
         sprintf($$, "pinMode(%s, OUTPUT);\n", $2);
         free($2);
       }
+    | CONFIGURAR IDENTIFICADOR COMO ENTRADA PONTO_E_VIRGULA 
+    {
+        $$ = malloc(50);
+        sprintf($$, "pinMode(%s, INPUT);\n", $2);
+        free($2);
+      }
     | LIGAR IDENTIFICADOR PONTO_E_VIRGULA 
     {
         $$ = malloc(50);
