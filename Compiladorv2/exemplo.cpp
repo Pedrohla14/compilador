@@ -4,6 +4,7 @@ int ledPin;
 int botao;
 int estadoBotao;
 int estadoBotao2;
+int brilho;
 
 
 void setup() {
@@ -11,12 +12,13 @@ ledPin = 13;
 pinMode(ledPin, OUTPUT);
 botao = 12;
 pinMode(botao, INPUT);
-ledcSetup(ledPin, 5000, 8);
-ledcAttachPin(ledPin, ledPin);}
+brilho = 128;
+}
 
 void loop() {
 estadoBotao = digitalRead(botao);
 estadoBotao2 = analogRead(botao);
+ledcWrite(ledPin, brilho);
 digitalWrite(ledPin, HIGH);
 delay(1000);
 digitalWrite(ledPin, LOW);

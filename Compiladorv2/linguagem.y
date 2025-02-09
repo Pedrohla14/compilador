@@ -161,6 +161,18 @@ comando:
         sprintf($$, "%s = %d;\n", $1, $3);
         free($1);
     }
+    |AJUSTAR_PWM IDENTIFICADOR COM VALOR IDENTIFICADOR PONTO_E_VIRGULA {
+    check_variable($2);  
+    check_variable($5); 
+    asprintf(&$$, "ledcWrite(%s, %s);\n", $2, $5); 
+    free($2);  
+    free($5);  
+    }
+    | AJUSTAR_PWM IDENTIFICADOR COM VALOR NUM PONTO_E_VIRGULA {
+        check_variable($2);  
+        asprintf(&$$, "ledcWrite(%s, %d);\n", $2, $5); 
+        free($2);  
+    }
     | CONFIGURAR_PWM IDENTIFICADOR COM FREQUENCIA NUM RESOLUCAO NUM PONTO_E_VIRGULA
     { 
         check_variable($2);

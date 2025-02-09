@@ -2,18 +2,20 @@ var inteiro: ledPin;
 var inteiro: botao;
 var inteiro: estadoBotao;
 var inteiro: estadoBotao2;
+var inteiro: brilho;
 
 config
   ledPin = 13;
   configurar ledPin como saida;
   botao = 12;
   configurar botao como entrada;
-  configurarPWM ledPin com frequencia 5000 resolucao 8;
+  brilho = 128;
 fim
 
 repita
   estadoBotao = lerDigital botao;
   estadoBotao2 = lerAnalogico botao;
+  ajustarPWM ledPin com valor brilho; 
   ligar ledPin;
   esperar 1000;
   desligar ledPin;
