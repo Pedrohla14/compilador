@@ -8,6 +8,7 @@ config
   configurar ledPin como saida;
   botao = 12;
   configurar botao como entrada;
+  configurarPWM ledPin com frequencia 5000 resolucao 8;
 fim
 
 repita

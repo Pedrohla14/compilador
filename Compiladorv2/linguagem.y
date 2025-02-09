@@ -161,6 +161,14 @@ comando:
         sprintf($$, "%s = %d;\n", $1, $3);
         free($1);
     }
+    | CONFIGURAR_PWM IDENTIFICADOR COM FREQUENCIA NUM RESOLUCAO NUM PONTO_E_VIRGULA
+    { 
+        check_variable($2);
+        $$ = (char*) malloc(100);  
+        sprintf($$, "ledcSetup(%s, %d, %d);\nledcAttachPin(%s, %s);", 
+                $2, $5, $7, $2, $2); 
+        free($2);  
+    }
     | CONFIGURAR IDENTIFICADOR COMO SAIDA PONTO_E_VIRGULA 
     {
         check_variable($2);

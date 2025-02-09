@@ -11,7 +11,8 @@ ledPin = 13;
 pinMode(ledPin, OUTPUT);
 botao = 12;
 pinMode(botao, INPUT);
-}
+ledcSetup(ledPin, 5000, 8);
+ledcAttachPin(ledPin, ledPin);}
 
 void loop() {
 estadoBotao = digitalRead(botao);
