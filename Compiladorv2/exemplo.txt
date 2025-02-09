@@ -29,4 +29,17 @@ repita
 
 
   escreverSerial "Botão pressionado!";
+  enquanto
+    ajustarPWM ledPin com valor brilho;
+    esperar 1000;
+  fim
+
+  se estadoBotao == 1 entao
+      ligar ledPin;
+  senao
+      desligar ledPin;
+  fim
+  se estadoBotao == 1 entao
+      ligar ledPin;
+  fim
 fim

@@ -1,8 +1,10 @@
 %{
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+/* Tabela de símbolos para controle semântico (declaração de variáveis) */
 typedef struct Symbol {
     char *name;
     char *type;
@@ -58,7 +60,8 @@ int yylex();
 %token SOMA SUBTRACAO MULTIPLICACAO DIVISAO
 %token IGUALDADE DOIS_PONTOS VIRGULA PONTO_E_VIRGULA
 
-%type <str> programa declaracoes declaracao tipo lista_ids config bloco_config repita bloco_repita comando
+/* Declaração dos não-terminais com tipo <str> */
+%type <str> programa declaracoes declaracao tipo lista_ids config bloco_config repita bloco_repita comando condicao operando comparador bloco_cmd senao_cmd_opt
 
 %start programa
 
@@ -68,7 +71,7 @@ programa:
    declaracoes config repita
     { 
         printf("#include <Arduino.h>\n");
-        printf("#include <WiFi.h>\n\n");  // Adiciona o include do WiFi.h
+        printf("#include <WiFi.h>\n\n");  /* Inclui o header do WiFi */
         printf("%s\n\nvoid setup() {\n%s}\n\nvoid loop() {\n%s}\n", $1, $2, $3);
         free($1); free($2); free($3);
     }
@@ -153,6 +156,7 @@ bloco_repita:
     }
     ;
 
+/* Regras para comandos individuais */
 comando:
     IDENTIFICADOR IGUALDADE NUM PONTO_E_VIRGULA 
     { 
@@ -165,10 +169,9 @@ comando:
     { 
         check_variable($1);
         $$ = (char*) malloc(strlen($1) + strlen($3) + 4);
-        sprintf($$, "%s = %s;\n", $1, $3);  // Atribui a string diretamente
+        sprintf($$, "%s = %s;\n", $1, $3);
         free($1); free($3);
     }
-   
     | CONECTAR_WIFI IDENTIFICADOR IDENTIFICADOR PONTO_E_VIRGULA
     {
         check_variable($2);
@@ -184,14 +187,16 @@ comando:
         free($2); 
         free($3);
     }
-    |AJUSTAR_PWM IDENTIFICADOR COM VALOR IDENTIFICADOR PONTO_E_VIRGULA {
-    check_variable($2);  
-    check_variable($5); 
-    asprintf(&$$, "ledcWrite(%s, %s);\n", $2, $5); 
-    free($2);  
-    free($5);  
+    | AJUSTAR_PWM IDENTIFICADOR COM VALOR IDENTIFICADOR PONTO_E_VIRGULA 
+    {
+        check_variable($2);  
+        check_variable($5); 
+        asprintf(&$$, "ledcWrite(%s, %s);\n", $2, $5); 
+        free($2);  
+        free($5);  
     }
-    | AJUSTAR_PWM IDENTIFICADOR COM VALOR NUM PONTO_E_VIRGULA {
+    | AJUSTAR_PWM IDENTIFICADOR COM VALOR NUM PONTO_E_VIRGULA 
+    {
         check_variable($2);  
         asprintf(&$$, "ledcWrite(%s, %d);\n", $2, $5); 
         free($2);  
@@ -251,24 +256,90 @@ comando:
         asprintf(&$$, "%s = analogRead(%s);\n", $1, $4);
         free($1); free($4);
     }
-
-    
-    |CONFIGURAR_SERIAL NUM PONTO_E_VIRGULA
+    | CONFIGURAR_SERIAL NUM PONTO_E_VIRGULA
     {
         $$ = (char*) malloc(50);
-        sprintf($$, "Serial.begin(%d);\n", $2);  // Configura o baud rate
+        sprintf($$, "Serial.begin(%d);\n", $2);
     }
     | ESCREVER_SERIAL STRING PONTO_E_VIRGULA
     {
         $$ = (char*) malloc(100);
-        sprintf($$, "Serial.println(%s);\n", $2);  // Envia mensagem pela serial
+        sprintf($$, "Serial.println(%s);\n", $2);
     }
     | IDENTIFICADOR IGUALDADE LER_SERIAL PONTO_E_VIRGULA
     {
         check_variable($1);
         $$ = (char*) malloc(50);
-        sprintf($$, "%s = Serial.readString();\n", $1);  // Lê mensagem da serial
+        sprintf($$, "%s = Serial.readString();\n", $1);
     }
+    | SE condicao ENTAO bloco_cmd senao_cmd_opt FIM
+    {
+        if (strlen($5) > 0) {
+            asprintf(&$$, "if (%s) {\n%s} else {\n%s}\n", $2, $4, $5);
+        } else {
+            asprintf(&$$, "if (%s) {\n%s}\n", $2, $4);
+        }
+        free($2); free($4); free($5);
+    }
+
+    | ENQUANTO bloco_cmd FIM
+    {
+        asprintf(&$$, "while (true) {\n%s}\n", $2);
+        free($2);
+    }
+    ;
+
+/* Regra para construir uma condição simples (do tipo: operando comparador operando) */
+condicao:
+    operando comparador operando
+    { 
+        asprintf(&$$, "%s %s %s", $1, $2, $3);
+        free($1); free($2); free($3);
+    }
+    ;
+
+/* Operando pode ser uma variável ou um número */
+operando:
+    IDENTIFICADOR 
+    { 
+        check_variable($1); 
+        $$ = $1; 
+    }
+    | NUM 
+    { 
+        char temp[32];
+        sprintf(temp, "%d", $1);
+        $$ = strdup(temp);
+    }
+    ;
+
+/* Converte os operadores relacionais para a sintaxe C */
+comparador:
+    IGUAL { $$ = strdup("=="); }
+    | DIFERENTE { $$ = strdup("!="); }
+    | MENOR_IGUAL { $$ = strdup("<="); }
+    | MAIOR_IGUAL { $$ = strdup(">="); }
+    | MENOR { $$ = strdup("<"); }
+    | MAIOR { $$ = strdup(">"); }
+    ;
+
+/* Bloco de comandos (sequência de comandos) */
+bloco_cmd:
+    { $$ = strdup(""); }
+    | bloco_cmd comando
+    { 
+        char* temp = (char*) malloc(strlen($1) + strlen($2) + 1);
+        strcpy(temp, $1);
+        strcat(temp, $2);
+        free($1); free($2);
+        $$ = temp;
+    }
+    ;
+
+/* Bloco opcional para o senao; se não houver senao, retorna string vazia */
+senao_cmd_opt:
+    SENAO bloco_cmd { $$ = $2; }
+    | /* vazio */ { $$ = strdup(""); }
     ;
 
 %%

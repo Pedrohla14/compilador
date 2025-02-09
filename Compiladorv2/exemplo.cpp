@@ -36,4 +36,16 @@ delay(1000);
 digitalWrite(ledPin, LOW);
 delay(1000);
 Serial.println("Botão pressionado!");
+while (true) {
+ledcWrite(ledPin, brilho);
+delay(1000);
+}
+if (estadoBotao == 1) {
+digitalWrite(ledPin, HIGH);
+} else {
+digitalWrite(ledPin, LOW);
+}
+if (estadoBotao == 1) {
+digitalWrite(ledPin, HIGH);
+}
 }
