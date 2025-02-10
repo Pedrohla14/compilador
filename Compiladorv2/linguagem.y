@@ -1,10 +1,12 @@
 %{
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-/* Tabela de símbolos para controle semântico (declaração de variáveis) */
+extern int yylineno;  /* Variável definida no scanner (lex) */
+int error_count = 0;  /* Contador global de erros */
+
+// Tabela de símbolos para controle semântico (declaração de variáveis)
 typedef struct Symbol {
     char *name;
     char *type;
@@ -34,7 +36,8 @@ int variable_declared(const char *name) {
 
 void check_variable(const char *name) {
     if (!variable_declared(name)) {
-        fprintf(stderr, "Erro semantico: variavel '%s' nao foi declarada\n", name);
+        error_count++;
+        fprintf(stderr, "Erro semantico na linha %d: variavel '%s' nao foi declarada\n", yylineno, name);
     }
 }
 
@@ -207,13 +210,11 @@ comando:
     {
         check_variable($2);
         asprintf(&$$, "pinMode(%s, INPUT);\n", $2);
-     
     }
     | LIGAR IDENTIFICADOR PONTO_E_VIRGULA 
     {
         check_variable($2);
         asprintf(&$$,"digitalWrite(%s, HIGH);\n", $2);
-     
     }
     | DESLIGAR IDENTIFICADOR PONTO_E_VIRGULA 
     {
@@ -257,7 +258,6 @@ comando:
             asprintf(&$$, "if (%s) {\n%s}\n", $2, $4);
         }
     }
-
     | ENQUANTO bloco_cmd FIM
     {
         asprintf(&$$, "while (true) {\n%s}\n", $2);
@@ -319,7 +319,8 @@ senao_cmd_opt:
 %%
 
 void yyerror(const char *s) {
-    fprintf(stderr, "Erro: %s\n", s);
+    error_count++;
+    fprintf(stderr, "Erro sintatico na linha %d: %s\n", yylineno, s);
 }
 
 int main(int argc, char *argv[]) {
@@ -334,7 +335,12 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     
-    yyparse();
+    int parse_result = yyparse();
     fclose(yyin);
-    return 0;
+    
+    if (error_count > 0) {
+        fprintf(stderr, "Compilacao finalizada com %d erro(s).\n", error_count);
+        return 1;
+    }
+    return parse_result;
 }
