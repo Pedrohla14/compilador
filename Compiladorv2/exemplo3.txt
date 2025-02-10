@@ -1,0 +1,17 @@
+var inteiro: ledPin;
+var inteiro: brilho;
+
+config
+  ledPin = 18;
+  configurar ledPin como saida;
+  brilho = 128;
+ 
+fim
+
+repita
+  ajustarPWM ledPin com valor brilho; 
+  ligar ledPin;
+  esperar 1000;
+  desligar ledPin;
+  esperar 1000;
+fim

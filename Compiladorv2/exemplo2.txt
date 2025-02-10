@@ -1,7 +1,5 @@
-var inteiro: ledPin;
 var inteiro: botao;
-var inteiro: estadoBotao;
-var inteiro: estadoBotao2;
+var inteiro: ledPin;
 var inteiro: brilho;
 var texto: ssid;
 var texto: senha;
