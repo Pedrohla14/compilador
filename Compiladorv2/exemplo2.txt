@@ -1,4 +1,3 @@
-var inteiro: botao;
 var inteiro: ledPin;
 var inteiro: brilho;
 var texto: ssid;

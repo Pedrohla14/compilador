@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include <WiFi.h>
 
-int botao;
 int ledPin;
 int brilho;
 String ssid;
