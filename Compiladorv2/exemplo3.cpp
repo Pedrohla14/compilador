@@ -1,17 +1,18 @@
 #include <Arduino.h>
+#include <WiFi.h>
 
 int ledPin;
-int ledPin2;
+int brilho;
 
 
 void setup() {
-ledPin = 13;
-ledpin2 = 14;
+ledPin = 18;
 pinMode(ledPin, OUTPUT);
-pinMode(ledPin2, INPUT);
+brilho = 128;
 }
 
 void loop() {
+ledcWrite(ledPin, brilho);
 digitalWrite(ledPin, HIGH);
 delay(1000);
 digitalWrite(ledPin, LOW);

@@ -161,16 +161,12 @@ comando:
     IDENTIFICADOR IGUALDADE NUM PONTO_E_VIRGULA 
     { 
         check_variable($1);
-        $$ = (char*) malloc(50);  
-        sprintf($$, "%s = %d;\n", $1, $3);
-        free($1);
+        asprintf(&$$, "%s = %d;\n", $1, $3);
     }
     | IDENTIFICADOR IGUALDADE STRING PONTO_E_VIRGULA 
     { 
         check_variable($1);
-        $$ = (char*) malloc(strlen($1) + strlen($3) + 4);
-        sprintf($$, "%s = %s;\n", $1, $3);
-        free($1); free($3);
+        asprintf(&$$, "%s = %s;\n", $1, $3);
     }
     | CONECTAR_WIFI IDENTIFICADOR IDENTIFICADOR PONTO_E_VIRGULA
     {
@@ -184,93 +180,74 @@ comando:
             "}\n"
             "Serial.println(\"Conectado ao WiFi!\");\n",
             $2, $3);
-        free($2); 
-        free($3);
     }
     | AJUSTAR_PWM IDENTIFICADOR COM VALOR IDENTIFICADOR PONTO_E_VIRGULA 
     {
         check_variable($2);  
         check_variable($5); 
         asprintf(&$$, "ledcWrite(%s, %s);\n", $2, $5); 
-        free($2);  
-        free($5);  
     }
     | AJUSTAR_PWM IDENTIFICADOR COM VALOR NUM PONTO_E_VIRGULA 
     {
         check_variable($2);  
         asprintf(&$$, "ledcWrite(%s, %d);\n", $2, $5); 
-        free($2);  
     }
     | CONFIGURAR_PWM IDENTIFICADOR COM FREQUENCIA NUM RESOLUCAO NUM PONTO_E_VIRGULA
     { 
         check_variable($2);
-        $$ = (char*) malloc(100);  
-        sprintf($$, "ledcSetup(%s, %d, %d);\nledcAttachPin(%s, %s);", 
+        asprintf(&$$, "ledcSetup(%s, %d, %d);\nledcAttachPin(%s, %s);", 
                 $2, $5, $7, $2, $2); 
-        free($2);  
     }
     | CONFIGURAR IDENTIFICADOR COMO SAIDA PONTO_E_VIRGULA 
     {
         check_variable($2);
-        $$ = (char*) malloc(50);  
-        sprintf($$, "pinMode(%s, OUTPUT);\n", $2);
-        free($2);
+        asprintf(&$$, "pinMode(%s, OUTPUT);\n", $2);
     }
     | CONFIGURAR IDENTIFICADOR COMO ENTRADA PONTO_E_VIRGULA 
     {
         check_variable($2);
-        $$ = (char*) malloc(50);  
-        sprintf($$, "pinMode(%s, INPUT);\n", $2);
-        free($2);
+        asprintf(&$$, "pinMode(%s, INPUT);\n", $2);
+     
     }
     | LIGAR IDENTIFICADOR PONTO_E_VIRGULA 
     {
         check_variable($2);
-        $$ = (char*) malloc(50);  
-        sprintf($$, "digitalWrite(%s, HIGH);\n", $2);
-        free($2);
+        asprintf(&$$,"digitalWrite(%s, HIGH);\n", $2);
+     
     }
     | DESLIGAR IDENTIFICADOR PONTO_E_VIRGULA 
     {
         check_variable($2);
-        $$ = (char*) malloc(50);  
-        sprintf($$, "digitalWrite(%s, LOW);\n", $2);
-        free($2);
+        asprintf(&$$, "digitalWrite(%s, LOW);\n", $2);
     }
     | ESPERAR NUM PONTO_E_VIRGULA 
     {
-        $$ = (char*) malloc(50);  
-        sprintf($$, "delay(%d);\n", $2);
+        asprintf(&$$, "delay(%d);\n", $2);
     }
     | IDENTIFICADOR IGUALDADE LER_DIGITAL IDENTIFICADOR PONTO_E_VIRGULA 
     {
         check_variable($1);
         check_variable($4);
         asprintf(&$$, "%s = digitalRead(%s);\n", $1, $4);
-        free($1); free($4);
     }
     | IDENTIFICADOR IGUALDADE LER_ANALOGICO IDENTIFICADOR PONTO_E_VIRGULA 
     {
         check_variable($1);
         check_variable($4);
         asprintf(&$$, "%s = analogRead(%s);\n", $1, $4);
-        free($1); free($4);
     }
     | CONFIGURAR_SERIAL NUM PONTO_E_VIRGULA
     {
-        $$ = (char*) malloc(50);
-        sprintf($$, "Serial.begin(%d);\n", $2);
+        asprintf(&$$, "Serial.begin(%d);\n", $2);
     }
     | ESCREVER_SERIAL STRING PONTO_E_VIRGULA
     {
-        $$ = (char*) malloc(100);
-        sprintf($$, "Serial.println(%s);\n", $2);
+        asprintf(&$$, "Serial.println(%s);\n", $2);
     }
     | IDENTIFICADOR IGUALDADE LER_SERIAL PONTO_E_VIRGULA
     {
         check_variable($1);
-        $$ = (char*) malloc(50);
-        sprintf($$, "%s = Serial.readString();\n", $1);
+        asprintf(&$$, "%s = Serial.readString();\n", $1);
     }
     | SE condicao ENTAO bloco_cmd senao_cmd_opt FIM
     {
@@ -279,13 +256,11 @@ comando:
         } else {
             asprintf(&$$, "if (%s) {\n%s}\n", $2, $4);
         }
-        free($2); free($4); free($5);
     }
 
     | ENQUANTO bloco_cmd FIM
     {
         asprintf(&$$, "while (true) {\n%s}\n", $2);
-        free($2);
     }
     ;
 
@@ -294,7 +269,6 @@ condicao:
     operando comparador operando
     { 
         asprintf(&$$, "%s %s %s", $1, $2, $3);
-        free($1); free($2); free($3);
     }
     ;
 
