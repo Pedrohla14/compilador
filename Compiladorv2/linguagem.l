@@ -7,6 +7,7 @@ void yyerror(const char *s);
 %}
 
 %option noyywrap
+%option yylineno
 
 %%
 
@@ -59,7 +60,8 @@ void yyerror(const char *s);
 [0-9]+                { yylval.num = atoi(yytext); return NUM; }
 \"[^\"]*\"            { yylval.str = strdup(yytext); return STRING; }
 [a-zA-Z_][a-zA-Z0-9_]* { yylval.str = strdup(yytext); return IDENTIFICADOR; }
-[ \t\n]               { /* Ignorar espaços */ }
+[ \t]+                { /* Ignora espaços e tabs */ }
+\n                    { yylineno++; }
 .                     { yyerror("Caractere inválido"); }
 
 %%
