@@ -1,3 +1,10 @@
+/*
+    Extensão .y refere-se a gramática
+    - Inclusões de bibliotecas
+    - Variáveis globais
+    - Estruturas de dados
+    - Funções auxiliares
+*/
 %{
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,8 +47,6 @@ void declare_variable(const char *name, const char *type) {
     symbol_table = s;
 }
 
-
-
 void check_variable(const char *name) {
     if (!variable_declared(name)) {
         error_count++;
@@ -52,7 +57,7 @@ void check_variable(const char *name) {
 extern FILE *yyin;
 void yyerror(const char *s);
 int yylex();
-%}
+%} 
 
 %union {
     char* str;
@@ -75,7 +80,7 @@ int yylex();
 %type <str> programa declaracoes declaracao tipo lista_ids config bloco_config repita bloco_repita comando condicao operando comparador bloco_cmd senao_cmd_opt
 
 %start programa
-
+/*Definição da gramática*/
 %%
 
 programa:
