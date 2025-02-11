@@ -54,6 +54,45 @@ void check_variable(const char *name) {
     }
 }
 
+/*Inclusao para gerar ATS*/
+// Estrutura de um nó da AST
+typedef struct Node {
+    char *label;           // Nome do nó (ex: "Programa", "Config")
+    struct Node **children; // Filhos (lista de nós)
+    int num_children;       // Número de filhos
+} Node;
+
+// Função para criar um nó
+Node* create_node(char *label, int num_children, ...) {
+    Node *node = (Node*) malloc(sizeof(Node));
+    node->label = strdup(label);
+    node->num_children = num_children;
+    node->children = (Node**) malloc(num_children * sizeof(Node*));
+
+    va_list args;
+    va_start(args, num_children);
+    for (int i = 0; i < num_children; i++) {
+        node->children[i] = va_arg(args, Node*);
+    }
+    va_end(args);
+
+    return node;
+}
+
+// Função para imprimir a AST
+void print_ast(Node *node, int level) {
+    if (!node) return;
+    for (int i = 0; i < level; i++) printf("  ");
+    printf("%s\n", node->label);
+    for (int i = 0; i < node->num_children; i++) {
+        print_ast(node->children[i], level + 1);
+    }
+}
+
+// Raiz da AST
+Node *syntax_tree = NULL;
+%}
+
 extern FILE *yyin;
 void yyerror(const char *s);
 int yylex();
@@ -62,6 +101,7 @@ int yylex();
 %union {
     char* str;
     int num;
+    Node *node;
 }
 
 %token <num> NUM
@@ -75,6 +115,10 @@ int yylex();
 %token IGUAL DIFERENTE MENOR_IGUAL MAIOR_IGUAL MENOR MAIOR
 %token SOMA SUBTRACAO MULTIPLICACAO DIVISAO
 %token IGUALDADE DOIS_PONTOS VIRGULA PONTO_E_VIRGULA
+/*Inclusão tokens da ATS*/
+%token <str> ID CONFIG REPITA
+%type <node> programa declaracoes declaracao config repita bloco_cmd comando condicao operando comparador
+
 
 /* Declaração dos não-terminais com tipo <str> */
 %type <str> programa declaracoes declaracao tipo lista_ids config bloco_config repita bloco_repita comando condicao operando comparador bloco_cmd senao_cmd_opt
@@ -89,6 +133,10 @@ programa:
         printf("#include <Arduino.h>\n");
         printf("#include <WiFi.h>\n\n");  /* Inclui o header do WiFi */
         printf("%s\n\nvoid setup() {\n%s}\n\nvoid loop() {\n%s}\n", $1, $2, $3);
+
+        // Construção da AST
+        $$ = create_node("Programa", $1, $2, $3);
+
         free($1); free($2); free($3);
     }
     ;
@@ -101,7 +149,9 @@ declaracoes:
         strcpy(temp, $1);
         strcat(temp, $2);
         free($1); free($2);
-        $$ = temp;
+        
+        // Construção da AST
+        $$ = create_node("Declaracoes", $1, $2);
     }
     ;
 
@@ -118,14 +168,18 @@ declaracao:
         }
         free(ids);
         free($2); free($4);
-        $$ = buffer;
+        
+        // Construção da AST
+        $$ = create_node("Declaracao", create_node("Tipo", $2), create_node("Identificadores", $4));
     }
     ;
+
 tipo:
     INTEIRO   { $$ = strdup("int"); }
   | BOOLEANO { $$ = strdup("bool"); }
   | TEXTO    { $$ = strdup("String"); }
   ;
+
 lista_ids:
     IDENTIFICADOR 
     { $$ = strdup($1); free($1); }
