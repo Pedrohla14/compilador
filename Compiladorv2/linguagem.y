@@ -15,14 +15,6 @@ typedef struct Symbol {
 
 Symbol *symbol_table = NULL;
 
-void declare_variable(const char *name, const char *type) {
-    Symbol *s = (Symbol *) malloc(sizeof(Symbol));
-    s->name = strdup(name);
-    s->type = strdup(type);
-    s->next = symbol_table;
-    symbol_table = s;
-}
-
 int variable_declared(const char *name) {
     Symbol *current = symbol_table;
     while (current != NULL) {
@@ -33,6 +25,22 @@ int variable_declared(const char *name) {
     }
     return 0;
 }
+
+void declare_variable(const char *name, const char *type) {
+    if (variable_declared(name)) {
+        error_count++;
+        fprintf(stderr, "Erro semantico na linha %d: variavel '%s' ja foi declarada\n", yylineno, name);
+        return;
+    }
+
+    Symbol *s = (Symbol *) malloc(sizeof(Symbol));
+    s->name = strdup(name);
+    s->type = strdup(type);
+    s->next = symbol_table;
+    symbol_table = s;
+}
+
+
 
 void check_variable(const char *name) {
     if (!variable_declared(name)) {
