@@ -1,7 +1,7 @@
 var inteiro: ledPin;
 var inteiro: brilho;
 var texto: ssid;
-var texto: senha;
+var texto: senha; 
 
 config
   ledPin = 2;
