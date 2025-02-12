@@ -48,6 +48,20 @@ void check_variable(const char *name) {
         fprintf(stderr, "Erro semantico na linha %d: variavel '%s' nao foi declarada\n", yylineno, name);
     }
 }
+void check_compatibility(const char *var_name, const char *expected_type) {
+    Symbol *current = symbol_table;
+    while (current != NULL) {
+        if (strcmp(current->name, var_name) == 0) {
+            if (strcmp(current->type, expected_type) != 0) {
+                error_count++;
+                fprintf(stderr, "Erro semantico na linha %d: tipo de variavel '%s' incompatível. Esperado '%s', encontrado '%s'.\n", 
+                        yylineno, var_name, expected_type, current->type);
+            }
+            return;
+        }
+        current = current->next;
+    }
+}
 
 extern FILE *yyin;
 void yyerror(const char *s);
@@ -172,11 +186,13 @@ comando:
     IDENTIFICADOR IGUALDADE NUM PONTO_E_VIRGULA 
     { 
         check_variable($1);
+        check_compatibility($1, "int");
         asprintf(&$$, "%s = %d;\n", $1, $3);
     }
     | IDENTIFICADOR IGUALDADE STRING PONTO_E_VIRGULA 
     { 
         check_variable($1);
+        check_compatibility($1, "String");
         asprintf(&$$, "%s = %s;\n", $1, $3);
     }
     | CONECTAR_WIFI IDENTIFICADOR IDENTIFICADOR PONTO_E_VIRGULA
