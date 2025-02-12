@@ -2,6 +2,7 @@
 #include <WiFi.h>
 
 int ledPin;
+int ledPin2;
 int brilho;
 String ssid;
 String senha;
@@ -9,9 +10,10 @@ String senha;
 
 void setup() {
 ledPin = 2;
+ledPin2 = 2;
 ssid = "MinhaRedeWiFi";
 senha = "MinhaSenhaWiFi";
-pinMode(ledPin, OUTPUT);
+pinMode(ledPin2, OUTPUT);
 ledcSetup(ledPin, 5000, 8);
 ledcAttachPin(ledPin, ledPin);WiFi.begin(ssid.c_str(), senha.c_str());
 while (WiFi.status() != WL_CONNECTED) {

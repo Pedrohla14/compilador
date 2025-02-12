@@ -12,7 +12,6 @@ brilho = 128;
 }
 
 void loop() {
-ledcWrite(ledPin, brilho);
 digitalWrite(ledPin, HIGH);
 delay(1000);
 digitalWrite(ledPin, LOW);

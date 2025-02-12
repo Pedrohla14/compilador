@@ -13,6 +13,14 @@ typedef struct Symbol {
     struct Symbol *next;
 } Symbol;
 
+typedef struct PinConfig {
+    char *pin_name;
+    char *mode; // "OUTPUT", "INPUT", "PWM"
+    struct PinConfig *next;
+} PinConfig;
+
+PinConfig *pin_table = NULL;
+
 Symbol *symbol_table = NULL;
 
 int variable_declared(const char *name) {
@@ -61,6 +69,38 @@ void check_compatibility(const char *var_name, const char *expected_type) {
         }
         current = current->next;
     }
+}
+
+
+int pin_configured(const char *pin_name) {
+    PinConfig *current = pin_table;
+    while (current != NULL) {
+        if (strcmp(current->pin_name, pin_name) == 0) {
+            return 1;
+        }
+        current = current->next;
+    }
+    return 0;
+}
+
+void declare_pin(const char *pin_name, const char *mode) {
+    
+    PinConfig *p = (PinConfig *) malloc(sizeof(PinConfig));
+    p->pin_name = strdup(pin_name);
+    p->mode = strdup(mode);
+    p->next = pin_table;
+    pin_table = p;
+}
+
+const char* get_pin_mode(const char *pin_name) {
+    PinConfig *current = pin_table;
+    while (current != NULL) {
+        if (strcmp(current->pin_name, pin_name) == 0) {
+            return current->mode;
+        }
+        current = current->next;
+    }
+    return NULL; // Pino não configurado
 }
 
 extern FILE *yyin;
@@ -208,12 +248,16 @@ comando:
             "Serial.println(\"Conectado ao WiFi!\");\n",
             $2, $3);
     }
-    | AJUSTAR_PWM IDENTIFICADOR COM VALOR IDENTIFICADOR PONTO_E_VIRGULA 
-    {
-        check_variable($2);  
-        check_variable($5); 
-        asprintf(&$$, "ledcWrite(%s, %s);\n", $2, $5); 
+    | AJUSTAR_PWM IDENTIFICADOR COM VALOR IDENTIFICADOR PONTO_E_VIRGULA {
+    check_variable($2);
+    check_variable($5);
+    const char *mode = get_pin_mode($2);
+    if (mode == NULL || strcmp(mode, "PWM") != 0) {
+        error_count++;
+        fprintf(stderr, "Erro semantico na linha %d: pino '%s' nao configurado como 'PWM'\n", yylineno, $2);
     }
+    asprintf(&$$, "ledcWrite(%s, %s);\n", $2, $5);
+}
     | AJUSTAR_PWM IDENTIFICADOR COM VALOR NUM PONTO_E_VIRGULA 
     {
         check_variable($2);  
@@ -222,44 +266,63 @@ comando:
     | CONFIGURAR_PWM IDENTIFICADOR COM FREQUENCIA NUM RESOLUCAO NUM PONTO_E_VIRGULA
     { 
         check_variable($2);
+        declare_pin($2, "PWM");
         asprintf(&$$, "ledcSetup(%s, %d, %d);\nledcAttachPin(%s, %s);", 
                 $2, $5, $7, $2, $2); 
     }
     | CONFIGURAR IDENTIFICADOR COMO SAIDA PONTO_E_VIRGULA 
     {
         check_variable($2);
+        declare_pin($2, "OUTPUT");
         asprintf(&$$, "pinMode(%s, OUTPUT);\n", $2);
     }
     | CONFIGURAR IDENTIFICADOR COMO ENTRADA PONTO_E_VIRGULA 
     {
         check_variable($2);
+        declare_pin($2, "INPUT");
         asprintf(&$$, "pinMode(%s, INPUT);\n", $2);
     }
-    | LIGAR IDENTIFICADOR PONTO_E_VIRGULA 
-    {
-        check_variable($2);
-        asprintf(&$$,"digitalWrite(%s, HIGH);\n", $2);
+    | LIGAR IDENTIFICADOR PONTO_E_VIRGULA {
+    check_variable($2);
+    const char *mode = get_pin_mode($2);
+    if (mode == NULL || strcmp(mode, "OUTPUT") != 0) {
+        error_count++;
+        fprintf(stderr, "Erro semantico na linha %d: pino '%s' nao configurado como 'OUTPUT'\n", yylineno, $2);
     }
-    | DESLIGAR IDENTIFICADOR PONTO_E_VIRGULA 
-    {
+    asprintf(&$$,"digitalWrite(%s, HIGH);\n", $2);
+    }
+    | DESLIGAR IDENTIFICADOR PONTO_E_VIRGULA {
         check_variable($2);
+        const char *mode = get_pin_mode($2);
+        if (mode == NULL || strcmp(mode, "OUTPUT") != 0) {
+            error_count++;
+            fprintf(stderr, "Erro semantico na linha %d: pino '%s' nao configurado como 'OUTPUT'\n", yylineno, $2);
+        }
         asprintf(&$$, "digitalWrite(%s, LOW);\n", $2);
     }
     | ESPERAR NUM PONTO_E_VIRGULA 
     {
         asprintf(&$$, "delay(%d);\n", $2);
     }
-    | IDENTIFICADOR IGUALDADE LER_DIGITAL IDENTIFICADOR PONTO_E_VIRGULA 
-    {
-        check_variable($1);
-        check_variable($4);
-        asprintf(&$$, "%s = digitalRead(%s);\n", $1, $4);
+    | IDENTIFICADOR IGUALDADE LER_DIGITAL IDENTIFICADOR PONTO_E_VIRGULA {
+    check_variable($1);
+    check_variable($4);
+    const char *mode = get_pin_mode($4);
+    if (mode == NULL || strcmp(mode, "INPUT") != 0) {
+        error_count++;
+        fprintf(stderr, "Erro semantico na linha %d: pino '%s' nao configurado como 'INPUT'\n", yylineno, $4);
     }
-    | IDENTIFICADOR IGUALDADE LER_ANALOGICO IDENTIFICADOR PONTO_E_VIRGULA 
-    {
-        check_variable($1);
-        check_variable($4);
-        asprintf(&$$, "%s = analogRead(%s);\n", $1, $4);
+    asprintf(&$$, "%s = digitalRead(%s);\n", $1, $4);
+    }
+    | IDENTIFICADOR IGUALDADE LER_ANALOGICO IDENTIFICADOR PONTO_E_VIRGULA {
+    check_variable($1);
+    check_variable($4);
+    const char *mode = get_pin_mode($4);
+    if (mode == NULL || strcmp(mode, "INPUT") != 0) {
+        error_count++;
+        fprintf(stderr, "Erro semantico na linha %d: pino '%s' nao configurado como 'INPUT'\n", yylineno, $4);
+    }
+    asprintf(&$$, "%s = analogRead(%s);\n", $1, $4);
     }
     | CONFIGURAR_SERIAL NUM PONTO_E_VIRGULA
     {
