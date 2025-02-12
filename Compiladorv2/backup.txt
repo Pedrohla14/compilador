@@ -13,14 +13,6 @@ typedef struct Symbol {
     struct Symbol *next;
 } Symbol;
 
-typedef struct PinConfig {
-    char *pin_name;
-    char *mode; // "OUTPUT", "INPUT", "PWM"
-    struct PinConfig *next;
-} PinConfig;
-
-PinConfig *pin_table = NULL;
-
 Symbol *symbol_table = NULL;
 
 int variable_declared(const char *name) {
@@ -48,14 +40,13 @@ void declare_variable(const char *name, const char *type) {
     symbol_table = s;
 }
 
-
-
 void check_variable(const char *name) {
     if (!variable_declared(name)) {
         error_count++;
         fprintf(stderr, "Erro semantico na linha %d: variavel '%s' nao foi declarada\n", yylineno, name);
     }
 }
+
 void check_compatibility(const char *var_name, const char *expected_type) {
     Symbol *current = symbol_table;
     while (current != NULL) {
@@ -69,38 +60,6 @@ void check_compatibility(const char *var_name, const char *expected_type) {
         }
         current = current->next;
     }
-}
-
-
-int pin_configured(const char *pin_name) {
-    PinConfig *current = pin_table;
-    while (current != NULL) {
-        if (strcmp(current->pin_name, pin_name) == 0) {
-            return 1;
-        }
-        current = current->next;
-    }
-    return 0;
-}
-
-void declare_pin(const char *pin_name, const char *mode) {
-    
-    PinConfig *p = (PinConfig *) malloc(sizeof(PinConfig));
-    p->pin_name = strdup(pin_name);
-    p->mode = strdup(mode);
-    p->next = pin_table;
-    pin_table = p;
-}
-
-const char* get_pin_mode(const char *pin_name) {
-    PinConfig *current = pin_table;
-    while (current != NULL) {
-        if (strcmp(current->pin_name, pin_name) == 0) {
-            return current->mode;
-        }
-        current = current->next;
-    }
-    return NULL; // Pino não configurado
 }
 
 extern FILE *yyin;
@@ -125,7 +84,6 @@ int yylex();
 %token SOMA SUBTRACAO MULTIPLICACAO DIVISAO
 %token IGUALDADE DOIS_PONTOS VIRGULA PONTO_E_VIRGULA
 
-/* Declaração dos não-terminais com tipo <str> */
 %type <str> programa declaracoes declaracao tipo lista_ids config bloco_config repita bloco_repita comando condicao operando comparador bloco_cmd senao_cmd_opt
 
 %start programa
@@ -137,7 +95,7 @@ programa:
     { 
         printf("#include <Arduino.h>\n");
         printf("#include <WiFi.h>\n\n");  /* Inclui o header do WiFi */
-        printf("%s\n\nvoid setup() {\n%s}\n\nvoid loop() {\n%s}\n", $1, $2, $3);
+        printf("%s\n\nvoid setup() {\n%s}\n\nvoid loop() {\n%s\n}\n", $1, $2, $3);
         free($1); free($2); free($3);
     }
     ;
@@ -248,16 +206,12 @@ comando:
             "Serial.println(\"Conectado ao WiFi!\");\n",
             $2, $3);
     }
-    | AJUSTAR_PWM IDENTIFICADOR COM VALOR IDENTIFICADOR PONTO_E_VIRGULA {
-    check_variable($2);
-    check_variable($5);
-    const char *mode = get_pin_mode($2);
-    if (mode == NULL || strcmp(mode, "PWM") != 0) {
-        error_count++;
-        fprintf(stderr, "Erro semantico na linha %d: pino '%s' nao configurado como 'PWM'\n", yylineno, $2);
+    | AJUSTAR_PWM IDENTIFICADOR COM VALOR IDENTIFICADOR PONTO_E_VIRGULA 
+    {
+        check_variable($2);  
+        check_variable($5); 
+        asprintf(&$$, "ledcWrite(%s, %s);\n", $2, $5); 
     }
-    asprintf(&$$, "ledcWrite(%s, %s);\n", $2, $5);
-}
     | AJUSTAR_PWM IDENTIFICADOR COM VALOR NUM PONTO_E_VIRGULA 
     {
         check_variable($2);  
@@ -266,168 +220,49 @@ comando:
     | CONFIGURAR_PWM IDENTIFICADOR COM FREQUENCIA NUM RESOLUCAO NUM PONTO_E_VIRGULA
     { 
         check_variable($2);
-        declare_pin($2, "PWM");
         asprintf(&$$, "ledcSetup(%s, %d, %d);\nledcAttachPin(%s, %s);", 
                 $2, $5, $7, $2, $2); 
     }
     | CONFIGURAR IDENTIFICADOR COMO SAIDA PONTO_E_VIRGULA 
     {
         check_variable($2);
-        declare_pin($2, "OUTPUT");
         asprintf(&$$, "pinMode(%s, OUTPUT);\n", $2);
     }
     | CONFIGURAR IDENTIFICADOR COMO ENTRADA PONTO_E_VIRGULA 
     {
         check_variable($2);
-        declare_pin($2, "INPUT");
         asprintf(&$$, "pinMode(%s, INPUT);\n", $2);
     }
-    | LIGAR IDENTIFICADOR PONTO_E_VIRGULA {
-    check_variable($2);
-    const char *mode = get_pin_mode($2);
-    if (mode == NULL || strcmp(mode, "OUTPUT") != 0) {
-        error_count++;
-        fprintf(stderr, "Erro semantico na linha %d: pino '%s' nao configurado como 'OUTPUT'\n", yylineno, $2);
-    }
-    asprintf(&$$,"digitalWrite(%s, HIGH);\n", $2);
-    }
-    | DESLIGAR IDENTIFICADOR PONTO_E_VIRGULA {
+    | LIGAR IDENTIFICADOR PONTO_E_VIRGULA 
+    {
         check_variable($2);
-        const char *mode = get_pin_mode($2);
-        if (mode == NULL || strcmp(mode, "OUTPUT") != 0) {
-            error_count++;
-            fprintf(stderr, "Erro semantico na linha %d: pino '%s' nao configurado como 'OUTPUT'\n", yylineno, $2);
-        }
+        asprintf(&$$,"digitalWrite(%s, HIGH);\n", $2);
+    }
+    | DESLIGAR IDENTIFICADOR PONTO_E_VIRGULA 
+    {
+        check_variable($2);
         asprintf(&$$, "digitalWrite(%s, LOW);\n", $2);
     }
     | ESPERAR NUM PONTO_E_VIRGULA 
     {
         asprintf(&$$, "delay(%d);\n", $2);
     }
-    | IDENTIFICADOR IGUALDADE LER_DIGITAL IDENTIFICADOR PONTO_E_VIRGULA {
-    check_variable($1);
-    check_variable($4);
-    const char *mode = get_pin_mode($4);
-    if (mode == NULL || strcmp(mode, "INPUT") != 0) {
-        error_count++;
-        fprintf(stderr, "Erro semantico na linha %d: pino '%s' nao configurado como 'INPUT'\n", yylineno, $4);
-    }
-    asprintf(&$$, "%s = digitalRead(%s);\n", $1, $4);
-    }
-    | IDENTIFICADOR IGUALDADE LER_ANALOGICO IDENTIFICADOR PONTO_E_VIRGULA {
-    check_variable($1);
-    check_variable($4);
-    const char *mode = get_pin_mode($4);
-    if (mode == NULL || strcmp(mode, "INPUT") != 0) {
-        error_count++;
-        fprintf(stderr, "Erro semantico na linha %d: pino '%s' nao configurado como 'INPUT'\n", yylineno, $4);
-    }
-    asprintf(&$$, "%s = analogRead(%s);\n", $1, $4);
-    }
-    | CONFIGURAR_SERIAL NUM PONTO_E_VIRGULA
-    {
-        asprintf(&$$, "Serial.begin(%d);\n", $2);
-    }
-    | ESCREVER_SERIAL STRING PONTO_E_VIRGULA
-    {
-        asprintf(&$$, "Serial.println(%s);\n", $2);
-    }
-    | IDENTIFICADOR IGUALDADE LER_SERIAL PONTO_E_VIRGULA
-    {
-        check_variable($1);
-        asprintf(&$$, "%s = Serial.readString();\n", $1);
-    }
-    | SE condicao ENTAO bloco_cmd senao_cmd_opt FIM
-    {
-        if (strlen($5) > 0) {
-            asprintf(&$$, "if (%s) {\n%s} else {\n%s}\n", $2, $4, $5);
-        } else {
-            asprintf(&$$, "if (%s) {\n%s}\n", $2, $4);
-        }
-    }
-    | ENQUANTO bloco_cmd FIM
-    {
-        asprintf(&$$, "while (true) {\n%s}\n", $2);
-    }
-    ;
-
-/* Regra para construir uma condição simples (do tipo: operando comparador operando) */
-condicao:
-    operando comparador operando
-    { 
-        asprintf(&$$, "%s %s %s", $1, $2, $3);
-    }
-    ;
-
-/* Operando pode ser uma variável ou um número */
-operando:
-    IDENTIFICADOR 
-    { 
-        check_variable($1); 
-        $$ = $1; 
-    }
-    | NUM 
-    { 
-        char temp[32];
-        sprintf(temp, "%d", $1);
-        $$ = strdup(temp);
-    }
-    ;
-
-/* Converte os operadores relacionais para a sintaxe C */
-comparador:
-    IGUAL { $$ = strdup("=="); }
-    | DIFERENTE { $$ = strdup("!="); }
-    | MENOR_IGUAL { $$ = strdup("<="); }
-    | MAIOR_IGUAL { $$ = strdup(">="); }
-    | MENOR { $$ = strdup("<"); }
-    | MAIOR { $$ = strdup(">"); }
-    ;
-
-/* Bloco de comandos (sequência de comandos) */
-bloco_cmd:
-    { $$ = strdup(""); }
-    | bloco_cmd comando
-    { 
-        char* temp = (char*) malloc(strlen($1) + strlen($2) + 1);
-        strcpy(temp, $1);
-        strcat(temp, $2);
-        free($1); free($2);
-        $$ = temp;
-    }
-    ;
-
-/* Bloco opcional para o senao; se não houver senao, retorna string vazia */
-senao_cmd_opt:
-    SENAO bloco_cmd { $$ = $2; }
-    | /* vazio */ { $$ = strdup(""); }
     ;
 
 %%
 
-void yyerror(const char *s) {
-    error_count++;
-    fprintf(stderr, "Erro sintatico na linha %d: %s\n", yylineno, s);
+int main(int argc, char *argv[]) {
+    if (argc > 1) {
+        yyin = fopen(argv[1], "r");
+        if (!yyin) {
+            perror("Erro ao abrir o arquivo");
+            return 1;
+        }
+    }
+    yyparse();
+    return error_count == 0 ? 0 : 1;
 }
 
-int main(int argc, char *argv[]) {
-    if (argc < 2) {
-        printf("Uso: %s arquivo_entrada\n", argv[0]);
-        return 1;
-    }
-    
-    yyin = fopen(argv[1], "r");
-    if (!yyin) {
-        perror("Erro ao abrir arquivo");
-        return 1;
-    }
-    
-    int parse_result = yyparse();
-    fclose(yyin);
-    
-    if (error_count > 0) {
-        fprintf(stderr, "Compilacao finalizada com %d erro(s).\n", error_count);
-        return 1;
-    }
-    return parse_result;
+void yyerror(const char *s) {
+    fprintf(stderr, "Erro de sintaxe na linha %d: %s\n", yylineno, s);
 }

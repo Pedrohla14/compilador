@@ -111,7 +111,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 57 "linguagem.y"
+#line 111 "linguagem.y"
 
     char* str;
     int num;

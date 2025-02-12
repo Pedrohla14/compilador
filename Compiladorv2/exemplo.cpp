@@ -2,6 +2,7 @@
 #include <WiFi.h>
 
 int ledPin;
+int ledPin2;
 int botao;
 int estadoBotao;
 int estadoBotao2;
@@ -12,8 +13,9 @@ String senha;
 
 void setup() {
 ledPin = 13;
-pinMode(ledPin, OUTPUT);
-botao = 12;
+pinMode(ledPin2, OUTPUT);
+ledcSetup(ledPin, 5000, 8);
+ledcAttachPin(ledPin, ledPin);botao = 12;
 pinMode(botao, INPUT);
 brilho = 128;
 ssid = "MinhaRedeWiFi";
@@ -31,21 +33,20 @@ void loop() {
 estadoBotao = digitalRead(botao);
 estadoBotao2 = analogRead(botao);
 ledcWrite(ledPin, brilho);
-digitalWrite(ledPin, HIGH);
+digitalWrite(ledPin2, HIGH);
 delay(1000);
-digitalWrite(ledPin, LOW);
+digitalWrite(ledPin2, LOW);
 delay(1000);
 Serial.println("Botão pressionado!");
 while (true) {
-ledcWrite(ledPin, brilho);
 delay(1000);
 }
 if (estadoBotao == 1) {
-digitalWrite(ledPin, HIGH);
+digitalWrite(ledPin2, HIGH);
 } else {
-digitalWrite(ledPin, LOW);
+digitalWrite(ledPin2, LOW);
 }
 if (estadoBotao == 1) {
-digitalWrite(ledPin, HIGH);
+digitalWrite(ledPin2, HIGH);
 }
 }

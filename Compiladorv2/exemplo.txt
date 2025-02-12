@@ -1,4 +1,5 @@
 var inteiro: ledPin;
+var inteiro: ledPin2;
 var inteiro: botao;
 var inteiro: estadoBotao;
 var inteiro: estadoBotao2;
@@ -8,7 +9,8 @@ var texto: senha;
 
 config
   ledPin = 13;
-  configurar ledPin como saida;
+  configurar ledPin2 como saida;
+  configurarPWM ledPin com frequencia 5000 resolucao 8;
   botao = 12;
   configurar botao como entrada;
   brilho = 128;
@@ -22,24 +24,23 @@ repita
   estadoBotao = lerDigital botao;
   estadoBotao2 = lerAnalogico botao;
   ajustarPWM ledPin com valor brilho; 
-  ligar ledPin;
+  ligar ledPin2;
   esperar 1000;
-  desligar ledPin;
+  desligar ledPin2;
   esperar 1000;
 
 
   escreverSerial "Botão pressionado!";
   enquanto
-    ajustarPWM ledPin com valor brilho;
     esperar 1000;
   fim
 
   se estadoBotao == 1 entao
-      ligar ledPin;
+      ligar ledPin2;
   senao
-      desligar ledPin;
+      desligar ledPin2;
   fim
   se estadoBotao == 1 entao
-      ligar ledPin;
+      ligar ledPin2;
   fim
 fim
