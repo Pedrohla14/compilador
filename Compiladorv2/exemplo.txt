@@ -7,7 +7,7 @@ var texto: ssid;
 var texto: senha;
 
 config
-  ledPin = "13";
+  ledPin = 13;
   configurar ledPin como saida;
   botao = 12;
   configurar botao como entrada;

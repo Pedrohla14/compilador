@@ -11,7 +11,7 @@ String senha;
 
 
 void setup() {
-ledPin = "13";
+ledPin = 13;
 pinMode(ledPin, OUTPUT);
 botao = 12;
 pinMode(botao, INPUT);
