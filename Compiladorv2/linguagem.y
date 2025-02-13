@@ -1,10 +1,3 @@
-/*
-    Extensão .y refere-se a gramática
-    - Inclusões de bibliotecas
-    - Variáveis globais
-    - Estruturas de dados
-    - Funções auxiliares
-*/
 %{
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,6 +47,8 @@ void declare_variable(const char *name, const char *type) {
     s->next = symbol_table;
     symbol_table = s;
 }
+
+
 
 void check_variable(const char *name) {
     if (!variable_declared(name)) {
@@ -108,54 +103,14 @@ const char* get_pin_mode(const char *pin_name) {
     return NULL; // Pino não configurado
 }
 
-/*Inclusao para gerar ATS*/
-// Estrutura de um nó da AST
-typedef struct Node {
-    char *label;           // Nome do nó (ex: "Programa", "Config")
-    struct Node **children; // Filhos (lista de nós)
-    int num_children;       // Número de filhos
-} Node;
-
-// Função para criar um nó
-Node* create_node(char *label, int num_children, ...) {
-    Node *node = (Node*) malloc(sizeof(Node));
-    node->label = strdup(label);
-    node->num_children = num_children;
-    node->children = (Node**) malloc(num_children * sizeof(Node*));
-
-    va_list args;
-    va_start(args, num_children);
-    for (int i = 0; i < num_children; i++) {
-        node->children[i] = va_arg(args, Node*);
-    }
-    va_end(args);
-
-    return node;
-}
-
-// Função para imprimir a AST
-void print_ast(Node *node, int level) {
-    if (!node) return;
-    for (int i = 0; i < level; i++) printf("  ");
-    printf("%s\n", node->label);
-    for (int i = 0; i < node->num_children; i++) {
-        print_ast(node->children[i], level + 1);
-    }
-}
-
-// Raiz da AST
-Node *syntax_tree = NULL;
-%}
-
 extern FILE *yyin;
 void yyerror(const char *s);
 int yylex();
-%} 
+%}
 
 %union {
     char* str;
     int num;
-    Node *node;
 }
 
 %token <num> NUM
@@ -169,16 +124,12 @@ int yylex();
 %token IGUAL DIFERENTE MENOR_IGUAL MAIOR_IGUAL MENOR MAIOR
 %token SOMA SUBTRACAO MULTIPLICACAO DIVISAO
 %token IGUALDADE DOIS_PONTOS VIRGULA PONTO_E_VIRGULA
-/*Inclusão tokens da ATS*/
-%token <str> ID CONFIG REPITA
-%type <node> programa declaracoes declaracao config repita bloco_cmd comando condicao operando comparador
-
 
 /* Declaração dos não-terminais com tipo <str> */
 %type <str> programa declaracoes declaracao tipo lista_ids config bloco_config repita bloco_repita comando condicao operando comparador bloco_cmd senao_cmd_opt
 
 %start programa
-/*Definição da gramática*/
+
 %%
 
 programa:
@@ -187,10 +138,6 @@ programa:
         printf("#include <Arduino.h>\n");
         printf("#include <WiFi.h>\n\n");  /* Inclui o header do WiFi */
         printf("%s\n\nvoid setup() {\n%s}\n\nvoid loop() {\n%s}\n", $1, $2, $3);
-
-        // Construção da AST
-        $$ = create_node("Programa", $1, $2, $3);
-
         free($1); free($2); free($3);
     }
     ;
@@ -203,9 +150,7 @@ declaracoes:
         strcpy(temp, $1);
         strcat(temp, $2);
         free($1); free($2);
-        
-        // Construção da AST
-        $$ = create_node("Declaracoes", $1, $2);
+        $$ = temp;
     }
     ;
 
@@ -222,38 +167,29 @@ declaracao:
         }
         free(ids);
         free($2); free($4);
-        
-        // Construção da AST
-        $$ = create_node("Declaracao", create_node("Tipo", $2), create_node("Identificadores", $4));
+        $$ = buffer;
     }
     ;
-
 tipo:
-    INTEIRO   { $$ = create_node("Tipo", "int"); }
-  | BOOLEANO { $$ = create_node("Tipo", "bool"); }
-  | TEXTO    { $$ = create_node("Tipo", "String"); }
+    INTEIRO   { $$ = strdup("int"); }
+  | BOOLEANO { $$ = strdup("bool"); }
+  | TEXTO    { $$ = strdup("String"); }
   ;
-
 lista_ids:
     IDENTIFICADOR 
-    { $$ = create_node("Identificador", $1); free($1); }
+    { $$ = strdup($1); free($1); }
     | lista_ids VIRGULA IDENTIFICADOR 
     { 
         char* temp = (char*) malloc(strlen($1) + strlen($3) + 3);
         sprintf(temp, "%s, %s", $1, $3);
         free($1); free($3);
-        
-        // Construção da AST
-        $$ = create_node("ListaIdentificadores", $1, create_node("Identificador", $3));
+        $$ = temp;
     }
     ;
 
 config:
     CONFIG bloco_config FIM 
-    { 
-        // Construção da AST
-        $$ = create_node("Config", $2); 
-    }
+    { $$ = $2; }
     ;
 
 bloco_config:
@@ -264,15 +200,13 @@ bloco_config:
         strcpy(temp, $1);
         strcat(temp, $2);
         free($1); free($2);
-        
-        // Construção da AST
-        $$ = create_node("BlocoConfig", $1, $2);
+        $$ = temp;
     }
     ;
 
 repita:
     REPITA bloco_repita FIM 
-    { $$ = create_node("Repita", $2); }
+    { $$ = $2; }
     ;
 
 bloco_repita:
@@ -284,28 +218,22 @@ bloco_repita:
         strcat(temp, $2);
         free($1); free($2);
         $$ = temp;
-
-        // Construção da AST
-        $$ = create_node("BlocoRepita", $1, $2);
     }
     ;
 
 /* Regras para comandos individuais */
-
 comando:
     IDENTIFICADOR IGUALDADE NUM PONTO_E_VIRGULA 
     { 
         check_variable($1);
         check_compatibility($1, "int");
         asprintf(&$$, "%s = %d;\n", $1, $3);
-        $$ = create_node("Atribuicao", $1, $3);
     }
     | IDENTIFICADOR IGUALDADE STRING PONTO_E_VIRGULA 
     { 
         check_variable($1);
         check_compatibility($1, "String");
         asprintf(&$$, "%s = %s;\n", $1, $3);
-        $$ = create_node("Atribuicao", $1, $3);
     }
     | CONECTAR_WIFI IDENTIFICADOR IDENTIFICADOR PONTO_E_VIRGULA
     {
@@ -319,19 +247,7 @@ comando:
             "}\n"
             "Serial.println(\"Conectado ao WiFi!\");\n",
             $2, $3);
-
-            // Construção da AST
-        $$ = create_node("ConectarWiFi", $2, $3);
     }
-<<<<<<< HEAD
-    | AJUSTAR_PWM IDENTIFICADOR COM VALOR IDENTIFICADOR PONTO_E_VIRGULA 
-    {
-        check_variable($2);  
-        check_variable($5); 
-        asprintf(&$$, "ledcWrite(%s, %s);\n", $2, $5); 
-        // Construção da AST
-        $$ = create_node("AjustarPWM", $2, $5);
-=======
     | AJUSTAR_PWM IDENTIFICADOR COM VALOR IDENTIFICADOR PONTO_E_VIRGULA {
     check_variable($2);
     check_variable($5);
@@ -339,7 +255,6 @@ comando:
     if (mode == NULL || strcmp(mode, "PWM") != 0) {
         error_count++;
         fprintf(stderr, "Erro semantico na linha %d: pino '%s' nao configurado como 'PWM'\n", yylineno, $2);
->>>>>>> origin/main
     }
     asprintf(&$$, "ledcWrite(%s, %s);\n", $2, $5);
 }
@@ -347,9 +262,6 @@ comando:
     {
         check_variable($2);  
         asprintf(&$$, "ledcWrite(%s, %d);\n", $2, $5); 
-        // Construção da AST
-        $$ = create_node("AjustarPWM", $2, $5);
-
     }
     | CONFIGURAR_PWM IDENTIFICADOR COM FREQUENCIA NUM RESOLUCAO NUM PONTO_E_VIRGULA
     { 
@@ -357,36 +269,25 @@ comando:
         declare_pin($2, "PWM");
         asprintf(&$$, "ledcSetup(%s, %d, %d);\nledcAttachPin(%s, %s);", 
                 $2, $5, $7, $2, $2); 
-        $$ = create_node("AjustarPWM", $2, $5);
     }
     | CONFIGURAR IDENTIFICADOR COMO SAIDA PONTO_E_VIRGULA 
     {
         check_variable($2);
         declare_pin($2, "OUTPUT");
         asprintf(&$$, "pinMode(%s, OUTPUT);\n", $2);
-        $$ = create_node("ConfigurarSaida", $2);
     }
     | CONFIGURAR IDENTIFICADOR COMO ENTRADA PONTO_E_VIRGULA 
     {
         check_variable($2);
         declare_pin($2, "INPUT");
         asprintf(&$$, "pinMode(%s, INPUT);\n", $2);
-        $$ = create_node("ConfigurarEntrada", $2);
     }
-<<<<<<< HEAD
-    | LIGAR IDENTIFICADOR PONTO_E_VIRGULA 
-    {
-        check_variable($2);
-        asprintf(&$$,"digitalWrite(%s, HIGH);\n", $2);
-        $$ = create_node("Ligar", $2);
-=======
     | LIGAR IDENTIFICADOR PONTO_E_VIRGULA {
     check_variable($2);
     const char *mode = get_pin_mode($2);
     if (mode == NULL || strcmp(mode, "OUTPUT") != 0) {
         error_count++;
         fprintf(stderr, "Erro semantico na linha %d: pino '%s' nao configurado como 'OUTPUT'\n", yylineno, $2);
->>>>>>> origin/main
     }
     asprintf(&$$,"digitalWrite(%s, HIGH);\n", $2);
     }
@@ -398,28 +299,11 @@ comando:
             fprintf(stderr, "Erro semantico na linha %d: pino '%s' nao configurado como 'OUTPUT'\n", yylineno, $2);
         }
         asprintf(&$$, "digitalWrite(%s, LOW);\n", $2);
-        $$ = create_node("Desligar", $2);
     }
     | ESPERAR NUM PONTO_E_VIRGULA 
     {
         asprintf(&$$, "delay(%d);\n", $2);
-        $$ = create_node("Esperar", $2);
     }
-<<<<<<< HEAD
-    | IDENTIFICADOR IGUALDADE LER_DIGITAL IDENTIFICADOR PONTO_E_VIRGULA 
-    {
-        check_variable($1);
-        check_variable($4);
-        asprintf(&$$, "%s = digitalRead(%s);\n", $1, $4);
-        $$ = create_node("LerDigital", $1, $4);
-    }
-    | IDENTIFICADOR IGUALDADE LER_ANALOGICO IDENTIFICADOR PONTO_E_VIRGULA 
-    {
-        check_variable($1);
-        check_variable($4);
-        asprintf(&$$, "%s = analogRead(%s);\n", $1, $4);
-        $$ = create_node("LerAnalogico", $1, $4);
-=======
     | IDENTIFICADOR IGUALDADE LER_DIGITAL IDENTIFICADOR PONTO_E_VIRGULA {
     check_variable($1);
     check_variable($4);
@@ -439,38 +323,31 @@ comando:
         fprintf(stderr, "Erro semantico na linha %d: pino '%s' nao configurado como 'INPUT'\n", yylineno, $4);
     }
     asprintf(&$$, "%s = analogRead(%s);\n", $1, $4);
->>>>>>> origin/main
     }
     | CONFIGURAR_SERIAL NUM PONTO_E_VIRGULA
     {
         asprintf(&$$, "Serial.begin(%d);\n", $2);
-        $$ = create_node("ConfigurarSerial", $2);
     }
     | ESCREVER_SERIAL STRING PONTO_E_VIRGULA
     {
         asprintf(&$$, "Serial.println(%s);\n", $2);
-        $$ = create_node("EscreverSerial", $2);
     }
     | IDENTIFICADOR IGUALDADE LER_SERIAL PONTO_E_VIRGULA
     {
         check_variable($1);
         asprintf(&$$, "%s = Serial.readString();\n", $1);
-        $$ = create_node("LerSerial", $1);
     }
     | SE condicao ENTAO bloco_cmd senao_cmd_opt FIM
     {
         if (strlen($5) > 0) {
             asprintf(&$$, "if (%s) {\n%s} else {\n%s}\n", $2, $4, $5);
-            $$ = create_node("IfElse", $2, $4, $5);
         } else {
             asprintf(&$$, "if (%s) {\n%s}\n", $2, $4);
-            $$ = create_node("If", $2, $4);
         }
     }
     | ENQUANTO bloco_cmd FIM
     {
         asprintf(&$$, "while (true) {\n%s}\n", $2);
-        $$ = create_node("Loop", $2);
     }
     ;
 
@@ -479,9 +356,6 @@ condicao:
     operando comparador operando
     { 
         asprintf(&$$, "%s %s %s", $1, $2, $3);
-
-        // Construção da AST
-        $$ = create_node("Condicao", $1, $2, $3);
     }
     ;
 
@@ -490,26 +364,24 @@ operando:
     IDENTIFICADOR 
     { 
         check_variable($1); 
-        $$ = $1;
-        $$ = create_node("Identificador", $1);
+        $$ = $1; 
     }
     | NUM 
     { 
         char temp[32];
         sprintf(temp, "%d", $1);
         $$ = strdup(temp);
-        $$ = create_node("Numero", temp);
     }
     ;
 
 /* Converte os operadores relacionais para a sintaxe C */
 comparador:
-    IGUAL { $$ = create_node("Comparador", "=="); }
-    | DIFERENTE { $$ = create_node("Comparador", "!="); }
-    | MENOR_IGUAL { $$ = create_node("Comparador", "<="); }
-    | MAIOR_IGUAL { $$ = create_node("Comparador", ">="); }
-    | MENOR { $$ = create_node("Comparador", "<"); }
-    | MAIOR { $$ = create_node("Comparador", ">"); }
+    IGUAL { $$ = strdup("=="); }
+    | DIFERENTE { $$ = strdup("!="); }
+    | MENOR_IGUAL { $$ = strdup("<="); }
+    | MAIOR_IGUAL { $$ = strdup(">="); }
+    | MENOR { $$ = strdup("<"); }
+    | MAIOR { $$ = strdup(">"); }
     ;
 
 /* Bloco de comandos (sequência de comandos) */
@@ -522,9 +394,6 @@ bloco_cmd:
         strcat(temp, $2);
         free($1); free($2);
         $$ = temp;
-
-        // Construção da AST
-        $$ = create_node("BlocoCmd", $1, $2);
     }
     ;
 
@@ -560,12 +429,5 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Compilacao finalizada com %d erro(s).\n", error_count);
         return 1;
     }
-
-    // Imprimir a AST se a análise sintática for bem-sucedida
-    if (parse_result == 0 && root) {
-        printf("Arvore Sintatica Abstrata (AST):\n");
-        print_ast(root, 0);
-    }
-    
     return parse_result;
 }
