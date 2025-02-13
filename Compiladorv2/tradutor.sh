@@ -1,6 +1,6 @@
 #!/bin/bash
 # Gera os arquivos do parser
-bison -d -o linguagem.tab.c linguagem.y
+bison -d -o -v linguagem.tab.c linguagem.y
 
 # Gera os arquivos do lexer
 flex -o lex.yy.c linguagem.l
