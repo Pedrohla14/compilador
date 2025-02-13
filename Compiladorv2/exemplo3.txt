@@ -9,7 +9,6 @@ config
 fim
 
 repita
-  ajustarPWM ledPin com valor brilho; 
   ligar ledPin;
   esperar 1000;
   desligar ledPin;
