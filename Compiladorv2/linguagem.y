@@ -48,14 +48,13 @@ void declare_variable(const char *name, const char *type) {
     symbol_table = s;
 }
 
-
-
 void check_variable(const char *name) {
     if (!variable_declared(name)) {
         error_count++;
         fprintf(stderr, "Erro semantico na linha %d: variavel '%s' nao foi declarada\n", yylineno, name);
     }
 }
+
 void check_compatibility(const char *var_name, const char *expected_type) {
     Symbol *current = symbol_table;
     while (current != NULL) {
@@ -70,7 +69,6 @@ void check_compatibility(const char *var_name, const char *expected_type) {
         current = current->next;
     }
 }
-
 
 int pin_configured(const char *pin_name) {
     PinConfig *current = pin_table;
@@ -103,6 +101,57 @@ const char* get_pin_mode(const char *pin_name) {
     return NULL; // Pino não configurado
 }
 
+// Inicio ATS
+typedef struct node {
+    char *value;
+    struct node *left;
+    struct node *right;
+} node;
+
+struct node *nval;
+
+node* create_node(const char *value, node *left, node *right) {
+    node *new_node = (node *)malloc(sizeof(node));
+    new_node->value = strdup(value);  // Garantir que a string seja copiada
+    new_node->left = left;
+    new_node->right = right;
+    return new_node;
+}
+
+void print_tree(node *root, int level) {
+    if (root == NULL)
+        return;
+
+    // Adiciona indentação proporcional ao nível do nó
+    for (int i = 0; i < level; i++)
+        printf("    ");
+
+    // Imprime o valor do nó
+    printf("|-- %s\n", root->value);
+
+    // Chama recursivamente para os filhos esquerdo e direito
+    print_tree(root->left, level + 1);
+    print_tree(root->right, level + 1);
+}
+
+void free_tree(node *root) {
+    if (root == NULL) {
+        return;
+    }
+
+    // Recursivamente libera os filhos esquerdo e direito
+    free_tree(root->left);
+    free_tree(root->right);
+
+    // Libera o valor do nó, se necessário
+    free((char*)root->value);  // Aqui você pode liberar a string armazenada no nó
+
+    // Libera o próprio nó
+    free(root);
+}
+
+// Fim ATS
+
 extern FILE *yyin;
 void yyerror(const char *s);
 int yylex();
@@ -110,11 +159,12 @@ int yylex();
 
 %union {
     char* str;
+    struct node *nval;
     int num;
 }
 
 %token <num> NUM
-%token <str> STRING IDENTIFICADOR
+%token <str> STRING
 %token CONFIG REPITA FIM VAR INTEIRO BOOLEANO TEXTO
 %token CONFIGURAR COMO SAIDA ENTRADA LIGAR DESLIGAR
 %token CONECTAR_WIFI CONFIGURAR_SERIAL ESCREVER_SERIAL LER_SERIAL
@@ -124,9 +174,18 @@ int yylex();
 %token IGUAL DIFERENTE MENOR_IGUAL MAIOR_IGUAL MENOR MAIOR
 %token SOMA SUBTRACAO MULTIPLICACAO DIVISAO
 %token IGUALDADE DOIS_PONTOS VIRGULA PONTO_E_VIRGULA
-
+%token IDENTIFICADOR
 /* Declaração dos não-terminais com tipo <str> */
-%type <str> programa declaracoes declaracao tipo lista_ids config bloco_config repita bloco_repita comando condicao operando comparador bloco_cmd senao_cmd_opt
+/*
+%type <str> programa declaracoes declaracao tipo 
+%type <str> lista_ids config bloco_config repita bloco_repita comando condicao
+%type <str> operando comparador bloco_cmd senao_cmd_opt
+*/
+
+%type <nval> programa declaracoes declaracao tipo 
+%type <nval> lista_ids config bloco_config repita bloco_repita comando condicao
+%type <nval> operando comparador bloco_cmd senao_cmd_opt
+%type <nval> IDENTIFICADOR
 
 %start programa
 
@@ -135,57 +194,70 @@ int yylex();
 programa:
    declaracoes config repita
     { 
-        printf("#include <Arduino.h>\n");
-        printf("#include <WiFi.h>\n\n");  /* Inclui o header do WiFi */
-        printf("%s\n\nvoid setup() {\n%s}\n\nvoid loop() {\n%s}\n", $1, $2, $3);
-        free($1); free($2); free($3);
+        $$ = create_node("programa", $1, create_node("setup", $2, $3));
+
+        char *setup_value = strdup($2->value);
+        char *loop_value = strdup($3->value);
+
+        asprintf(&( ($$)->value ), "#include <Arduino.h>\n#include <WiFi.h>\n\nvoid setup() {\n%s}\n\nvoid loop() {\n%s}\n", setup_value, loop_value);
+
+        // Libere as strings duplicadas depois de usá-las
+        free(setup_value);
+        free(loop_value);
     }
     ;
 
 declaracoes:
-    { $$ = strdup(""); }
+    { 
+        $$ = create_node("declaracoes", NULL, NULL);  // Criação de um nó vazio para declaracoes
+    }
     | declaracoes declaracao 
     { 
-        char* temp = (char*) malloc(strlen($1) + strlen($2) + 1);
-        strcpy(temp, $1);
-        strcat(temp, $2);
-        free($1); free($2);
-        $$ = temp;
+        $$ = create_node("declaracoes", $1, $2);  // Criação de um nó com os filhos $1 e $2
+        free($1); // Libera o nó anterior, se necessário
+        free($2); // Libera o nó da declaracao, se necessário
     }
     ;
 
-declaracao:
-    VAR tipo DOIS_PONTOS lista_ids PONTO_E_VIRGULA
-    { 
-        char* buffer = (char*) malloc(strlen($2) + strlen($4) + 4);
-        sprintf(buffer, "%s %s;\n", $2, $4);
-        char *ids = strdup($4);
-        char *token = strtok(ids, ", ");
-        while (token != NULL) {
-            declare_variable(token, $2);
-            token = strtok(NULL, ", ");
-        }
-        free(ids);
-        free($2); free($4);
-        $$ = buffer;
+
+declaracao: VAR tipo DOIS_PONTOS lista_ids PONTO_E_VIRGULA
+    {
+        $$ = create_node("declaracao", $2, $4);
+        asprintf(&($$->value), "%s %s;\n", $2->value, $4->value);
     }
     ;
+
 tipo:
-    INTEIRO   { $$ = strdup("int"); }
-  | BOOLEANO { $$ = strdup("bool"); }
-  | TEXTO    { $$ = strdup("String"); }
+    INTEIRO   { 
+        $$ = create_node("tipo", create_node("int", NULL, NULL), NULL); 
+    }
+  | BOOLEANO { 
+        $$ = create_node("tipo", create_node("bool", NULL, NULL), NULL); 
+    }
+  | TEXTO    { 
+        $$ = create_node("tipo", create_node("String", NULL, NULL), NULL); 
+    }
   ;
+
+
 lista_ids:
     IDENTIFICADOR 
-    { $$ = strdup($1); free($1); }
-    | lista_ids VIRGULA IDENTIFICADOR 
     { 
-        char* temp = (char*) malloc(strlen($1) + strlen($3) + 3);
-        sprintf(temp, "%s, %s", $1, $3);
-        free($1); free($3);
-        $$ = temp;
+        $$ = create_node($1->value, NULL, NULL); 
+        free($1);  // Libera a memória de $1 após usá-lo
     }
-    ;
+  | lista_ids VIRGULA IDENTIFICADOR 
+    { 
+        char* temp = (char*) malloc(strlen($1->value) + strlen($3->value) + 3);
+        sprintf(temp, "%s, %s", $1->value, $3->value);
+        free($1->value); free($3->value);
+        free($1); free($3);
+
+        node* temp_node = create_node(temp, NULL, NULL);  // Criar nó para a string
+        $$ = create_node("lista_ids", create_node("identificador", temp_node, NULL), NULL);
+    }
+  ;
+
 
 config:
     CONFIG bloco_config FIM 
@@ -193,14 +265,19 @@ config:
     ;
 
 bloco_config:
-    { $$ = strdup(""); }
+    //{ $$ = strdup(""); }
+    { $$ = create_node("", NULL, NULL); } // node vazio
     | bloco_config comando 
     { 
-        char* temp = (char*) malloc(strlen($1) + strlen($2) + 1);
-        strcpy(temp, $1);
-        strcat(temp, $2);
-        free($1); free($2);
-        $$ = temp;
+        char* temp = (char*) malloc(strlen($1->value) + strlen($2->value) + 1);
+        strcpy(temp, $1->value);
+        strcat(temp, $2->value);
+        free($1->value); free($2->value);
+
+        $$ = create_node(temp, NULL, NULL);
+        free(temp); // Liberar memória temporária
+
+        //$$ = temp;
     }
     ;
 
@@ -210,14 +287,17 @@ repita:
     ;
 
 bloco_repita:
-    { $$ = strdup(""); }
+    { $$ = create_node("", NULL, NULL); } // node vazio
     | bloco_repita comando 
     { 
-        char* temp = (char*) malloc(strlen($1) + strlen($2) + 1);
-        strcpy(temp, $1);
-        strcat(temp, $2);
-        free($1); free($2);
-        $$ = temp;
+        char* temp = (char*) malloc(strlen($1->value) + strlen($2->value) + 1);
+        strcpy(temp, $1->value);
+        strcat(temp, $2->value);
+        free($1->value); free($2->value);
+        //$$ = temp;
+
+        $$ = create_node(temp, NULL, NULL); // Criar um nó para temp
+        free(temp); // Liberar memória de temp
     }
     ;
 
@@ -225,137 +305,285 @@ bloco_repita:
 comando:
     IDENTIFICADOR IGUALDADE NUM PONTO_E_VIRGULA 
     { 
-        check_variable($1);
-        check_compatibility($1, "int");
-        asprintf(&$$, "%s = %d;\n", $1, $3);
+        check_variable($1->value);
+        check_compatibility($1->value, "int");
+
+        // Criação da string formatada
+        char* temp;
+        asprintf(&temp, "%s = %d;\n", $1->value, $3);
+
+        //asprintf(&$$, "%s = %d;\n", $1->value, $3->value);
+
+        // Criando um nó para armazenar a string formatada
+        $$ = create_node(temp, NULL, NULL);
+
+        // Liberar a memória temporária
+        free(temp);
     }
     | IDENTIFICADOR IGUALDADE STRING PONTO_E_VIRGULA 
     { 
-        check_variable($1);
-        check_compatibility($1, "String");
-        asprintf(&$$, "%s = %s;\n", $1, $3);
+        check_variable($1->value);
+        check_compatibility($1->value, "String");
+        //asprintf(&$$, "%s = %s;\n", $1->value, $3);
+
+        // Criação da string formatada
+        char* temp;
+        asprintf(&temp, "%s = %s;\n", $1->value, $3);  // $3 é um char* diretamente
+
+        // Agora cria um nó para armazenar a string formatada
+        $$ = create_node(temp, NULL, NULL);  // Armazenando a string formatada em um nó
+
+        // Liberar a memória temporária (caso necessário)
+        free(temp);
     }
     | CONECTAR_WIFI IDENTIFICADOR IDENTIFICADOR PONTO_E_VIRGULA
     {
-        check_variable($2);
-        check_variable($3);
-        asprintf(&$$, 
+        check_variable($2->value);
+        check_variable($3->value);
+        char* temp;
+        asprintf(&temp, 
             "WiFi.begin(%s.c_str(), %s.c_str());\n"
             "while (WiFi.status() != WL_CONNECTED) {\n"
             "    delay(500);\n"
             "    Serial.println(\"Conectando ao WiFi...\");\n"
             "}\n"
             "Serial.println(\"Conectado ao WiFi!\");\n",
-            $2, $3);
+            $2->value, $3->value);
+
+        // Agora cria um nó para armazenar a string formatada
+        $$ = create_node(temp, NULL, NULL);  // Armazenando a string formatada em um nó
+
+        // Liberar a memória temporária (caso necessário)
+        free(temp);
     }
+
     | AJUSTAR_PWM IDENTIFICADOR COM VALOR IDENTIFICADOR PONTO_E_VIRGULA {
-    check_variable($2);
-    check_variable($5);
-    const char *mode = get_pin_mode($2);
-    if (mode == NULL || strcmp(mode, "PWM") != 0) {
-        error_count++;
-        fprintf(stderr, "Erro semantico na linha %d: pino '%s' nao configurado como 'PWM'\n", yylineno, $2);
-    }
-    asprintf(&$$, "ledcWrite(%s, %s);\n", $2, $5);
-}
+        check_variable($2->value);
+        check_variable($5->value);
+        const char *mode = get_pin_mode($2->value);
+        if (mode == NULL || strcmp(mode, "PWM") != 0) {
+            error_count++;
+            fprintf(stderr, 
+                "Erro semantico na linha %d: pino '%s' nao configurado como 'PWM'\n", yylineno, $2->value);
+        }
+        char* temp;
+        asprintf(&temp, "ledcWrite(%s, %s);\n", $2->value, $5->value);
+        // Agora cria um nó para armazenar a string formatada
+        $$ = create_node(temp, NULL, NULL);  // Armazenando a string formatada em um nó 
+
+        // Liberar a memória temporária (caso necessário)
+        free(temp);
+    }   
+
     | AJUSTAR_PWM IDENTIFICADOR COM VALOR NUM PONTO_E_VIRGULA 
     {
-        check_variable($2);  
-        asprintf(&$$, "ledcWrite(%s, %d);\n", $2, $5); 
+        check_variable($2->value);
+        char* temp;
+        asprintf(&temp, "ledcWrite(%s, %d);\n", $2->value, $5);
+
+        // Agora cria um nó para armazenar a string formatada
+        $$ = create_node(temp, NULL, NULL);  // Armazenando a string formatada em um nó
+
+        // Liberar a memória temporária (caso necessário)
+        free(temp);
+
     }
     | CONFIGURAR_PWM IDENTIFICADOR COM FREQUENCIA NUM RESOLUCAO NUM PONTO_E_VIRGULA
     { 
-        check_variable($2);
-        declare_pin($2, "PWM");
-        asprintf(&$$, "ledcSetup(%s, %d, %d);\nledcAttachPin(%s, %s);", 
-                $2, $5, $7, $2, $2); 
+        check_variable($2->value);
+        declare_pin($2->value, "PWM");
+        char* temp;
+        asprintf(&temp, "ledcSetup(%s, %d, %d);\nledcAttachPin(%s, %s);", 
+                $2->value, $5, $7, $2->value, $2->value);
+
+        // Agora cria um nó para armazenar a string formatada
+        $$ = create_node(temp, NULL, NULL);  // Armazenando a string formatada em um nó
+
+        // Liberar a memória temporária (caso necessário)
+        free(temp);
+
     }
     | CONFIGURAR IDENTIFICADOR COMO SAIDA PONTO_E_VIRGULA 
     {
-        check_variable($2);
-        declare_pin($2, "OUTPUT");
-        asprintf(&$$, "pinMode(%s, OUTPUT);\n", $2);
+        check_variable($2->value);
+        declare_pin($2->value, "OUTPUT");
+        char* temp;
+        asprintf(&temp, "pinMode(%s, OUTPUT);\n", $2->value);
+
+        // Agora cria um nó para armazenar a string formatada
+        $$ = create_node(temp, NULL, NULL);  // Armazenando a string formatada em um nó
+
+        // Liberar a memória temporária (caso necessário)
+        free(temp);
     }
+
     | CONFIGURAR IDENTIFICADOR COMO ENTRADA PONTO_E_VIRGULA 
     {
-        check_variable($2);
-        declare_pin($2, "INPUT");
-        asprintf(&$$, "pinMode(%s, INPUT);\n", $2);
+        check_variable($2->value);
+        declare_pin($2->value, "INPUT");
+        char* temp;
+        asprintf(&temp, "pinMode(%s, INPUT);\n", $2->value);
+
+        // Agora cria um nó para armazenar a string formatada
+        $$ = create_node(temp, NULL, NULL);  // Armazenando a string formatada em um nó
+
+        // Liberar a memória temporária (caso necessário)
+        free(temp);
     }
+
     | LIGAR IDENTIFICADOR PONTO_E_VIRGULA {
-    check_variable($2);
-    const char *mode = get_pin_mode($2);
-    if (mode == NULL || strcmp(mode, "OUTPUT") != 0) {
-        error_count++;
-        fprintf(stderr, "Erro semantico na linha %d: pino '%s' nao configurado como 'OUTPUT'\n", yylineno, $2);
-    }
-    asprintf(&$$,"digitalWrite(%s, HIGH);\n", $2);
-    }
-    | DESLIGAR IDENTIFICADOR PONTO_E_VIRGULA {
-        check_variable($2);
-        const char *mode = get_pin_mode($2);
+        check_variable($2->value);
+        const char *mode = get_pin_mode($2->value);
         if (mode == NULL || strcmp(mode, "OUTPUT") != 0) {
             error_count++;
-            fprintf(stderr, "Erro semantico na linha %d: pino '%s' nao configurado como 'OUTPUT'\n", yylineno, $2);
+            fprintf(stderr, "Erro semantico na linha %d: pino '%s' nao configurado como 'OUTPUT'\n", yylineno, $2->value);
         }
-        asprintf(&$$, "digitalWrite(%s, LOW);\n", $2);
+        char* temp;
+        asprintf(&temp,"digitalWrite(%s, HIGH);\n", $2->value);
+
+        // Agora cria um nó para armazenar a string formatada
+        $$ = create_node(temp, NULL, NULL);  // Armazenando a string formatada em um nó
+
+        // Liberar a memória temporária (caso necessário)
+        free(temp);
+
     }
+
+    | DESLIGAR IDENTIFICADOR PONTO_E_VIRGULA {
+        check_variable($2->value);
+        const char *mode = get_pin_mode($2->value);
+        if (mode == NULL || strcmp(mode, "OUTPUT") != 0) {
+            error_count++;
+            fprintf(stderr, "Erro semantico na linha %d: pino '%s' nao configurado como 'OUTPUT'\n", yylineno, $2->value);
+        }
+        char* temp;
+        asprintf(&temp, "digitalWrite(%s, LOW);\n", $2->value);
+
+        // Agora cria um nó para armazenar a string formatada
+        $$ = create_node(temp, NULL, NULL);  // Armazenando a string formatada em um nó
+
+        // Liberar a memória temporária (caso necessário)
+        free(temp);
+    }
+
     | ESPERAR NUM PONTO_E_VIRGULA 
     {
-        asprintf(&$$, "delay(%d);\n", $2);
+        char* temp;
+        asprintf(&temp, "delay(%d);\n", $2);
+
+        // Agora cria um nó para armazenar a string formatada
+        $$ = create_node(temp, NULL, NULL);  // Armazenando a string formatada em um nó
+
+        // Liberar a memória temporária (caso necessário)
+        free(temp);
     }
+
     | IDENTIFICADOR IGUALDADE LER_DIGITAL IDENTIFICADOR PONTO_E_VIRGULA {
-    check_variable($1);
-    check_variable($4);
-    const char *mode = get_pin_mode($4);
-    if (mode == NULL || strcmp(mode, "INPUT") != 0) {
-        error_count++;
-        fprintf(stderr, "Erro semantico na linha %d: pino '%s' nao configurado como 'INPUT'\n", yylineno, $4);
+        check_variable($1->value);
+        check_variable($4->value);
+        const char *mode = get_pin_mode($4->value);
+        if (mode == NULL || strcmp(mode, "INPUT") != 0) {
+            error_count++;
+            fprintf(stderr, "Erro semantico na linha %d: pino '%s' nao configurado como 'INPUT'\n", yylineno, $4->value);
+        }
+        char* temp;
+        asprintf(&temp, "%s = digitalRead(%s);\n", $1->value, $4->value);
+
+        // Agora cria um nó para armazenar a string formatada
+        $$ = create_node(temp, NULL, NULL);  // Armazenando a string formatada em um nó
+
+        // Liberar a memória temporária (caso necessário)
+        free(temp);
     }
-    asprintf(&$$, "%s = digitalRead(%s);\n", $1, $4);
-    }
+
     | IDENTIFICADOR IGUALDADE LER_ANALOGICO IDENTIFICADOR PONTO_E_VIRGULA {
-    check_variable($1);
-    check_variable($4);
-    const char *mode = get_pin_mode($4);
-    if (mode == NULL || strcmp(mode, "INPUT") != 0) {
-        error_count++;
-        fprintf(stderr, "Erro semantico na linha %d: pino '%s' nao configurado como 'INPUT'\n", yylineno, $4);
+        check_variable($1->value);
+        check_variable($4->value);
+        const char *mode = get_pin_mode($4->value);
+        if (mode == NULL || strcmp(mode, "INPUT") != 0) {
+            error_count++;
+            fprintf(stderr, "Erro semantico na linha %d: pino '%s' nao configurado como 'INPUT'\n", yylineno, $4->value);
+        }
+        char* temp;
+        asprintf(&temp, "%s = analogRead(%s);\n", $1->value, $4->value);
+
+        // Agora cria um nó para armazenar a string formatada
+        $$ = create_node(temp, NULL, NULL);  // Armazenando a string formatada em um nó
+
+        // Liberar a memória temporária (caso necessário)
+        free(temp);
+
     }
-    asprintf(&$$, "%s = analogRead(%s);\n", $1, $4);
-    }
+
     | CONFIGURAR_SERIAL NUM PONTO_E_VIRGULA
     {
-        asprintf(&$$, "Serial.begin(%d);\n", $2);
+        char* temp;
+        asprintf(&temp, "Serial.begin(%d);\n", $2);
+
+        // Agora cria um nó para armazenar a string formatada
+        $$ = create_node(temp, NULL, NULL);  // Armazenando a string formatada em um nó
+
+        // Liberar a memória temporária (caso necessário)
+        free(temp);
+
     }
+
     | ESCREVER_SERIAL STRING PONTO_E_VIRGULA
     {
-        asprintf(&$$, "Serial.println(%s);\n", $2);
+        char* temp;
+        asprintf(&temp, "Serial.println(%s);\n", $2);
+
+        // Agora cria um nó para armazenar a string formatada
+        $$ = create_node(temp, NULL, NULL);  // Armazenando a string formatada em um nó
+
+        // Liberar a memória temporária (caso necessário)
+        free(temp);
     }
+
     | IDENTIFICADOR IGUALDADE LER_SERIAL PONTO_E_VIRGULA
     {
-        check_variable($1);
-        asprintf(&$$, "%s = Serial.readString();\n", $1);
+        check_variable($1->value);
+        char* temp;
+        asprintf(&temp, "%s = Serial.readString();\n", $1->value);
+
+        // Agora cria um nó para armazenar a string formatada
+        $$ = create_node(temp, NULL, NULL);  // Armazenando a string formatada em um nó
+
+        // Liberar a memória temporária (caso necessário)
+        free(temp);
     }
+
     | SE condicao ENTAO bloco_cmd senao_cmd_opt FIM
     {
-        if (strlen($5) > 0) {
-            asprintf(&$$, "if (%s) {\n%s} else {\n%s}\n", $2, $4, $5);
+        $$ = create_node("if", $2, create_node("then", $4, $5));
+        
+        if (strlen($5->value) > 0) {
+            asprintf(&($$->value), "if (%s) {\n%s} else {\n%s}\n", $2->value, $4->value, $5->value);
         } else {
-            asprintf(&$$, "if (%s) {\n%s}\n", $2, $4);
+            asprintf(&($$->value), "if (%s) {\n%s}\n", $2->value, $4->value);
         }
     }
+
     | ENQUANTO bloco_cmd FIM
     {
-        asprintf(&$$, "while (true) {\n%s}\n", $2);
+        char* temp;
+        asprintf(&temp, "while (true) {\n%s}\n", $2->value);
+
+         // Agora cria um nó para armazenar a string formatada
+        $$ = create_node(temp, NULL, NULL);  // Armazenando a string formatada em um nó
+
+        // Liberar a memória temporária (caso necessário)
+        free(temp);
+
     }
     ;
 
 /* Regra para construir uma condição simples (do tipo: operando comparador operando) */
 condicao:
     operando comparador operando
-    { 
-        asprintf(&$$, "%s %s %s", $1, $2, $3);
+   { 
+        $$ = create_node($2->value, $1, $3);
+        asprintf(&($$->value), "%s %s %s", $1->value, $2->value, $3->value);
     }
     ;
 
@@ -363,44 +591,52 @@ condicao:
 operando:
     IDENTIFICADOR 
     { 
-        check_variable($1); 
+        check_variable($1->value); 
         $$ = $1; 
     }
     | NUM 
     { 
         char temp[32];
         sprintf(temp, "%d", $1);
-        $$ = strdup(temp);
+        //$$ = strdup(temp);
+
+        // Criação de um nó para armazenar o número como string
+        $$ = create_node(strdup(temp), NULL, NULL);
     }
     ;
 
 /* Converte os operadores relacionais para a sintaxe C */
 comparador:
-    IGUAL { $$ = strdup("=="); }
-    | DIFERENTE { $$ = strdup("!="); }
-    | MENOR_IGUAL { $$ = strdup("<="); }
-    | MAIOR_IGUAL { $$ = strdup(">="); }
-    | MENOR { $$ = strdup("<"); }
-    | MAIOR { $$ = strdup(">"); }
+    IGUAL { $$ = create_node(strdup("=="), NULL, NULL); }
+    | DIFERENTE { $$ = create_node(strdup("!="), NULL, NULL); }
+    | MENOR_IGUAL { $$ = create_node(strdup("<="), NULL, NULL); }
+    | MAIOR_IGUAL { $$ = create_node(strdup(">="), NULL, NULL); }
+    | MENOR { $$ = create_node(strdup("<"), NULL, NULL); }
+    | MAIOR { $$ = create_node(strdup(">"), NULL, NULL); }
     ;
 
 /* Bloco de comandos (sequência de comandos) */
 bloco_cmd:
-    { $$ = strdup(""); }
+   { $$ = create_node("", NULL, NULL); }  // Cria um nó vazio
     | bloco_cmd comando
     { 
-        char* temp = (char*) malloc(strlen($1) + strlen($2) + 1);
-        strcpy(temp, $1);
-        strcat(temp, $2);
-        free($1); free($2);
-        $$ = temp;
+        char* temp = (char*) malloc(strlen($1->value) + strlen($2->value) + 1);
+        strcpy(temp, $1->value);
+        strcat(temp, $2->value);
+        free($1->value); free($2->value);
+        //$$ = temp;
+
+        // Cria um novo nó para armazenar a string concatenada
+        $$ = create_node(temp, NULL, NULL);  // Armazena o resultado em um novo nó
+
+        free(temp);  // Libera a memória temporária
     }
     ;
 
 /* Bloco opcional para o senao; se não houver senao, retorna string vazia */
 senao_cmd_opt:
     SENAO bloco_cmd { $$ = $2; }
-    | /* vazio */ { $$ = strdup(""); }
+    | /* vazio */ { $$ = create_node("", NULL, NULL); }
     ;
 
 %%
@@ -421,13 +657,21 @@ int main(int argc, char *argv[]) {
         perror("Erro ao abrir arquivo");
         return 1;
     }
-    
-    int parse_result = yyparse();
+
+    // Inicia a análise sintática
+    yyparse();
+
+    // Exibe a Árvore Sintática Abstrata (AST)
+    printf("\n=== Árvore Sintática Abstrata ===\n");
+    print_tree(nval, 0); // Assume que 'root' é a raiz da AST
+
+    // Exibe o código C++ gerado
+    printf("\n=== Código C++ Gerado ===\n");
+    printf("%s\n", nval->value);
+
+    // Libera memória da AST
+    free_tree(nval);
+
     fclose(yyin);
-    
-    if (error_count > 0) {
-        fprintf(stderr, "Compilacao finalizada com %d erro(s).\n", error_count);
-        return 1;
-    }
-    return parse_result;
+    return 0;
 }
