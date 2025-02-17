@@ -3,7 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define YYDEBUG 1  // Ativa o modo debug do Bison
+extern int yydebug; // Variável global de depuração do Bison
 extern int yylineno;  /* Variável definida no scanner (lex) */
+
 int error_count = 0;  /* Contador global de erros */
 
 // Tabela de símbolos para controle semântico (declaração de variáveis)
@@ -110,7 +113,7 @@ typedef struct node {
 
 struct node *nval;
 
-node* create_node(const char *value, node *left, node *right) {
+node* create_node(const char *value, node *left, node *right) {    
     node *new_node = (node *)malloc(sizeof(node));
     new_node->value = strdup(value);  // Garantir que a string seja copiada
     new_node->left = left;
@@ -199,7 +202,8 @@ programa:
         char *setup_value = strdup($2->value);
         char *loop_value = strdup($3->value);
 
-        asprintf(&( ($$)->value ), "#include <Arduino.h>\n#include <WiFi.h>\n\nvoid setup() {\n%s}\n\nvoid loop() {\n%s}\n", setup_value, loop_value);
+        asprintf(&( ($$)->value ), 
+                    "#include <Arduino.h>\n#include <WiFi.h>\n\nvoid setup() {\n%s}\n\nvoid loop() {\n%s}\n", setup_value, loop_value);
 
         // Libere as strings duplicadas depois de usá-las
         free(setup_value);
@@ -222,8 +226,8 @@ declaracoes:
 
 declaracao: VAR tipo DOIS_PONTOS lista_ids PONTO_E_VIRGULA
     {
-        $$ = create_node("declaracao", $2, $4);
-        asprintf(&($$->value), "%s %s;\n", $2->value, $4->value);
+        $$ = create_node("declaracao", $2, $4);        
+        asprintf(&($$->value), "%s %s;\n", $2->value, $4->value);        
     }
     ;
 
@@ -244,16 +248,19 @@ lista_ids:
     IDENTIFICADOR 
     { 
         $$ = create_node($1->value, NULL, NULL); 
-        free($1);  // Libera a memória de $1 após usá-lo
+        //free($1);  // Libera a memória de $1 após usá-lo
     }
   | lista_ids VIRGULA IDENTIFICADOR 
     { 
         char* temp = (char*) malloc(strlen($1->value) + strlen($3->value) + 3);
         sprintf(temp, "%s, %s", $1->value, $3->value);
-        free($1->value); free($3->value);
-        free($1); free($3);
+        free($1->value); 
+        free($3->value);
+        free($1);
+        free($3);
 
         node* temp_node = create_node(temp, NULL, NULL);  // Criar nó para a string
+        free(temp); // Liberando a memória temporária
         $$ = create_node("lista_ids", create_node("identificador", temp_node, NULL), NULL);
     }
   ;
@@ -643,6 +650,9 @@ senao_cmd_opt:
 
 void yyerror(const char *s) {
     error_count++;
+    if (s == NULL) {
+        s = "Erro desconhecido";
+    }
     fprintf(stderr, "Erro sintatico na linha %d: %s\n", yylineno, s);
 }
 
@@ -658,6 +668,8 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    yydebug = 1;
+
     // Inicia a análise sintática
     yyparse();
 
@@ -666,8 +678,8 @@ int main(int argc, char *argv[]) {
     print_tree(nval, 0); // Assume que 'root' é a raiz da AST
 
     // Exibe o código C++ gerado
-    printf("\n=== Código C++ Gerado ===\n");
-    printf("%s\n", nval->value);
+    //printf("\n=== Código C++ Gerado ===\n");
+    //printf("%s\n", nval->value);
 
     // Libera memória da AST
     free_tree(nval);
